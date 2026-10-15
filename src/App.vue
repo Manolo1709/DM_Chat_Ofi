@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import BebidasLista from './components/BebidasLista.vue'
+import ErrorCard from './components/ErrorCard.vue'
+import ExplicacionPanel from './components/ExplicacionPanel.vue'
 import PersonaForm from './components/PersonaForm.vue'
+import ResultadoPanel from './components/ResultadoPanel.vue'
 import TabernaDecor from './components/TabernaDecor.vue'
 import { bebidaPorDefecto } from './data/catalogo'
-import type { Bebida, DatosPersona } from './types/alcohol'
+import { calcular } from './services/api'
+import type { Bebida, CalculoResponse, DatosPersona } from './types/alcohol'
 
 const persona = ref<DatosPersona>({
   peso_kg: 70,
@@ -13,6 +17,23 @@ const persona = ref<DatosPersona>({
   estomago: 'algo',
 })
 const bebidas = ref<Bebida[]>([bebidaPorDefecto()])
+
+const loading = ref(false)
+const error = ref<string | null>(null)
+const resultado = ref<CalculoResponse | null>(null)
+
+async function handleSubmit() {
+  loading.value = true
+  error.value = null
+  try {
+    resultado.value = await calcular({ ...persona.value, bebidas: bebidas.value })
+  } catch (e) {
+    resultado.value = null
+    error.value = e instanceof Error ? e.message : 'No se pudo calcular el resultado.'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -32,11 +53,42 @@ const bebidas = ref<Bebida[]>([bebidaPorDefecto()])
     </header>
 
     <div class="escenario">
-      <form class="formulario" @submit.prevent>
-        <PersonaForm v-model="persona" />
+      <form class="formulario" @submit.prevent="handleSubmit">
+        <PersonaForm v-model="persona" :disabled="loading" />
 
-        <BebidasLista v-model="bebidas" />
+        <BebidasLista v-model="bebidas" :disabled="loading" />
+
+        <button class="boton" type="submit" :disabled="loading">
+          <span v-if="loading" class="spinner" aria-hidden="true"></span>
+          {{ loading ? 'Sirviendo…' : 'Ponme la cuenta' }}
+        </button>
       </form>
+
+      <div class="columna-resultado">
+        <ErrorCard v-if="error" :mensaje="error" @reintentar="handleSubmit" />
+
+        <template v-if="resultado">
+          <ResultadoPanel :resultado="resultado" />
+          <ExplicacionPanel
+            :explicacion="resultado.explicacion"
+            :consejos="resultado.consejos"
+            :loading="loading"
+            :peligro="resultado.nivel === 'peligroso'"
+          />
+        </template>
+        <section v-else class="pizarra pizarra-vacia">
+          <h2 class="titulo-tiza">Especial de la casa</h2>
+          <p class="jarra" aria-hidden="true">🍺</p>
+          <p>Rellena tus datos y pide la cuenta para ver cómo vas.</p>
+          <ul class="medidor medidor-fila" aria-hidden="true">
+            <li>Sobrio</li>
+            <li>Contento</li>
+            <li>Borracho</li>
+            <li>Peligroso</li>
+          </ul>
+          <p class="nota">Estimación orientativa. No sustituye a un alcoholímetro.</p>
+        </section>
+      </div>
     </div>
   </main>
 </template>
