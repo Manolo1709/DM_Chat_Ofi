@@ -1,0 +1,1598 @@
+/* =====================================================================
+   La Taberna: bar de barrio de los de toda la vida. Pared verde azulada
+   apagada, zócalo de madera oscura, luz amarilla de lámparas colgantes,
+   rótulos de neón, tele de tubo encima de la barra y taburetes rojos.
+   ===================================================================== */
+:root {
+  /* Pared y madera */
+  --pared: #35554d;
+  --pared-oscura: #22372f;
+  --madera: #4a2a17;
+  --madera-media: #6b3f20;
+  --madera-clara: #8a5a2e;
+  --madera-borde: #24130a;
+  --laton: #c9a243;
+  --laton-claro: #e8c96a;
+
+  /* Texto */
+  --texto: #f3e6c8;
+  --texto-suave: #cdb994;
+  --tinta: #2a1a0e;
+  --tinta-suave: #5b4228;
+  --crema: #f3e6c8;
+  --papel: #f7efd8;
+
+  /* Neón */
+  --neon-rojo: #ff4f6d;
+  --neon-verde: #5dff9a;
+  --neon-ambar: #ffc04d;
+
+  /* Niveles (sobre pantalla oscura) */
+  --nivel-sobrio: #7dffa8;
+  --nivel-alegre: #ffe066;
+  --nivel-borracho: #ffa04d;
+  --nivel-peligroso: #ff5c6c;
+
+  --foco: #4da3ff;
+
+  /* Ancho de cada lateral decorativo (neones, diana, estante) */
+  --ancho-lateral: clamp(110px, 10.5vw, 190px);
+
+  --fuente-neon: 'Yellowtail', 'Brush Script MT', cursive;
+  --fuente-cartel: 'Alfa Slab One', Georgia, 'Times New Roman', serif;
+  --fuente-tiza: 'Kalam', 'Segoe Print', 'Comic Sans MS', cursive;
+  --fuente-tele: 'VT323', 'Consolas', monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--texto);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  background-color: var(--pared-oscura);
+  /* Pared: tablones verticales, sombra en las esquinas y zócalo de madera */
+  background-image:
+    radial-gradient(ellipse at 50% 30%, transparent 35%, rgba(8, 14, 12, 0.75) 100%),
+    linear-gradient(180deg, transparent 0 68%, var(--madera-borde) 68% calc(68% + 6px), transparent calc(68% + 6px)),
+    linear-gradient(180deg, transparent 0 68%, var(--madera) 68%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.16) 0 2px, transparent 2px 84px),
+    linear-gradient(180deg, var(--pared-oscura), var(--pared) 30%, var(--pared) 60%, var(--pared-oscura));
+  background-attachment: fixed;
+}
+
+#app {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+:focus-visible {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* =====================================================================
+   Decoración fija
+   ===================================================================== */
+.decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Lámparas colgantes con cono de luz amarilla */
+.lampara-techo {
+  position: absolute;
+  top: 0;
+  display: grid;
+  justify-items: center;
+  transform: translateX(-50%);
+}
+
+.lampara-techo .cable {
+  width: 2px;
+  height: 1.4rem;
+  background: #111;
+}
+
+.lampara-techo .tulipa {
+  width: 4.2rem;
+  height: 1.8rem;
+  background: linear-gradient(180deg, #2f5a3a, #1d3a25);
+  clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%);
+  border-bottom: 4px solid #ffe7a0;
+}
+
+.lampara-techo .luz {
+  width: 30rem;
+  height: 70vh;
+  margin-top: -2px;
+  background: radial-gradient(ellipse 45% 100% at 50% 0%, rgba(255, 214, 120, 0.2), transparent 75%);
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+}
+
+/* Laterales: solo en pantallas anchas */
+.lateral {
+  position: absolute;
+  top: clamp(4rem, 9vh, 7rem);
+  width: var(--ancho-lateral);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1.2rem, 4vh, 2.5rem);
+}
+
+.lateral.izq {
+  left: 1.25rem;
+}
+
+.lateral.der {
+  right: 1.25rem;
+}
+
+/* En ordenador los laterales se ven siempre */
+@media (min-width: 1024px) {
+  .lateral {
+    display: flex;
+  }
+}
+
+.neon-cartel {
+  width: 100%;
+  overflow: visible;
+}
+
+.texto-neon {
+  font-family: var(--fuente-neon);
+  font-size: 38px;
+}
+
+.texto-neon.pequeno {
+  font-size: 22px;
+}
+
+.tubo.rojo {
+  fill: var(--neon-rojo);
+  filter: drop-shadow(0 0 3px var(--neon-rojo)) drop-shadow(0 0 10px var(--neon-rojo));
+}
+
+.tubo.verde {
+  stroke: var(--neon-verde);
+  filter: drop-shadow(0 0 3px var(--neon-verde)) drop-shadow(0 0 9px var(--neon-verde));
+}
+
+rect.tubo.rojo {
+  fill: none;
+  stroke: var(--neon-rojo);
+}
+
+.tubo.ambar {
+  fill: var(--neon-ambar);
+  filter: drop-shadow(0 0 3px var(--neon-ambar)) drop-shadow(0 0 9px var(--neon-ambar));
+}
+
+.parpadeo {
+  animation: parpadeo 6s infinite;
+}
+
+@keyframes parpadeo {
+  0%, 18%, 22%, 60%, 100% {
+    opacity: 1;
+  }
+  20%, 61% {
+    opacity: 0.35;
+  }
+}
+
+.diana {
+  width: 66%;
+  filter: drop-shadow(0 6px 6px rgba(0, 0, 0, 0.5));
+}
+
+.estante {
+  width: 92%;
+}
+
+/* Barra y taburetes: pie de página al final del contenido */
+.pie-barra {
+  position: relative;
+  z-index: 1;
+  order: 1;
+  flex-shrink: 0;
+  height: 6rem;
+  overflow: hidden;
+}
+
+.mostrador {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 3.2rem;
+  background:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.25) 0 3px, transparent 3px 140px),
+    linear-gradient(180deg, var(--madera-media), var(--madera));
+  border-top: 10px solid var(--madera-clara);
+  box-shadow: 0 -4px 0 var(--laton) inset, 0 -6px 18px rgba(0, 0, 0, 0.5);
+}
+
+.taburete {
+  position: absolute;
+  bottom: 0;
+  width: 3.6rem;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* =====================================================================
+   Estructura
+   ===================================================================== */
+.contenedor {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2.4rem 1rem 1.5rem;
+  display: grid;
+  gap: clamp(1rem, 3vh, 2rem);
+  align-content: start;
+}
+
+/* En ordenador el contenido deja sitio a los laterales para no taparlos */
+@media (min-width: 1024px) {
+  .contenedor {
+    max-width: calc(64rem + 2 * (var(--ancho-lateral) + 2.5rem));
+    padding-inline: calc(var(--ancho-lateral) + 2.5rem);
+  }
+}
+
+.escenario {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.formulario {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.columna-resultado {
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+  /* La tele se adapta al ancho de esta columna, no al de la ventana */
+  container-type: inline-size;
+}
+
+@media (min-width: 820px) {
+  .escenario {
+    grid-template-columns: 1.35fr 1fr;
+  }
+}
+
+/* =====================================================================
+   Cabecera: rótulo de neón sobre panel oscuro y nota clavada
+   ===================================================================== */
+.cabecera {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+}
+
+@media (min-width: 820px) {
+  .cabecera {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+.rotulo {
+  position: relative;
+  width: 100%;
+  padding: 1.1rem 1.25rem 1.2rem;
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 40%),
+    #15100c;
+  border: 6px solid #0b0806;
+  border-radius: 1.2rem;
+  box-shadow:
+    0 0 0 3px var(--madera-media),
+    0 12px 24px rgba(0, 0, 0, 0.55),
+    inset 0 0 30px rgba(255, 79, 109, 0.12);
+}
+
+/* Tubo verde que enmarca el rótulo */
+.rotulo::before {
+  content: '';
+  position: absolute;
+  inset: 0.55rem;
+  border: 3px solid var(--neon-verde);
+  border-radius: 0.8rem;
+  box-shadow:
+    0 0 6px var(--neon-verde),
+    inset 0 0 6px var(--neon-verde);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.rotulo-mini {
+  font-family: var(--fuente-cartel);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--neon-ambar);
+  text-shadow: 0 0 6px rgba(255, 192, 77, 0.8);
+}
+
+.letrero {
+  margin: 0;
+  font-family: var(--fuente-neon);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 8vw, 4.4rem);
+  line-height: 1.05;
+  color: #ffe1e6;
+  text-shadow:
+    0 0 4px #fff,
+    0 0 10px var(--neon-rojo),
+    0 0 22px var(--neon-rojo),
+    0 0 44px var(--neon-rojo);
+  animation: zumbido 7s infinite;
+}
+
+@keyframes zumbido {
+  0%, 92%, 96%, 100% {
+    opacity: 1;
+  }
+  93%, 95% {
+    opacity: 0.55;
+  }
+}
+
+.lema {
+  margin: 0;
+  font-style: italic;
+  color: var(--texto-suave);
+}
+
+/* Nota de papel clavada en la pared */
+.cartel {
+  position: relative;
+  margin: 0;
+  padding: 1.1rem 1.2rem 0.8rem;
+  max-width: 15rem;
+  text-align: center;
+  font-family: var(--fuente-tiza);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  color: var(--tinta);
+  background: linear-gradient(180deg, #fbf3dc, #efe1bb);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.5);
+  transform: rotate(-3deg);
+}
+
+.cartel .chincheta {
+  position: absolute;
+  top: 0.35rem;
+  left: 50%;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-left: -0.375rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ff7b7b, #b3241f);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* =====================================================================
+   Tarjetas del formulario: tablero de la barra con remate de latón
+   ===================================================================== */
+.tarjeta {
+  min-width: 0;
+  margin: 0;
+  padding: clamp(1rem, 2.4vh, 1.5rem);
+  display: block;
+  color: var(--texto);
+  background:
+    repeating-linear-gradient(176deg, rgba(0, 0, 0, 0.1) 0 2px, transparent 2px 22px),
+    repeating-linear-gradient(4deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 13px),
+    linear-gradient(180deg, var(--madera-media), var(--madera));
+  border: 3px solid var(--madera-borde);
+  border-top: 8px solid var(--laton);
+  border-radius: 0.6rem;
+  box-shadow:
+    0 10px 0 rgba(0, 0, 0, 0.35),
+    0 14px 28px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.titulo {
+  margin: 0 0 0.9rem;
+  padding: 0;
+  font-family: var(--fuente-cartel);
+  font-weight: 400;
+  font-size: 1.35rem;
+  letter-spacing: 0.02em;
+  color: var(--laton-claro);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+fieldset.tarjeta .titulo {
+  float: left;
+  width: 100%;
+}
+
+fieldset.tarjeta .titulo + * {
+  clear: both;
+}
+
+fieldset:disabled {
+  opacity: 0.65;
+}
+
+.campos {
+  display: grid;
+  gap: 1.1rem;
+}
+
+@media (min-width: 600px) {
+  .campos {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.2rem;
+  }
+}
+
+.campo {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
+}
+
+.campo label,
+.etiqueta {
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  color: var(--texto);
+}
+
+.fila-etiqueta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.fila-etiqueta strong {
+  white-space: nowrap;
+  color: var(--neon-ambar);
+}
+
+/* Entradas: posavasos de cartón */
+.entrada-unidad {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.entrada-unidad input,
+.bebida select {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.55rem 0.75rem;
+  color: var(--tinta);
+  background: var(--papel);
+  border: 2px solid var(--madera-borde);
+  border-radius: 0.5rem;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.18);
+}
+
+.entrada-unidad input {
+  width: 100%;
+}
+
+.entrada-unidad span {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--texto-suave);
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--laton);
+}
+
+/* Botones segmentados: fichas de latón */
+.segmentos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.segmentos.tres {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.segmento {
+  position: relative;
+}
+
+.segmento input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segmento span {
+  display: block;
+  padding: 0.55rem 0.3rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--texto);
+  background: rgba(0, 0, 0, 0.28);
+  border: 2px solid var(--madera-borde);
+  border-radius: 0.5rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.segmento small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+
+.segmento input:checked + span {
+  color: var(--tinta);
+  background: linear-gradient(180deg, var(--laton-claro), var(--laton));
+  border-color: #6d5214;
+  box-shadow: 0 0 10px rgba(232, 201, 106, 0.45);
+}
+
+.segmento input:checked + span small {
+  color: var(--tinta-suave);
+}
+
+.segmento input:focus-visible + span {
+  outline: 3px solid var(--foco);
+  outline-offset: 2px;
+}
+
+@media (min-width: 600px) {
+  .segmentos.tres .segmento small {
+    display: none;
+  }
+}
+
+/* =====================================================================
+   Lista de bebidas
+   ===================================================================== */
+.lista-bebidas {
+  list-style: none;
+  margin: 0 0 0.9rem;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.bebida {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.6rem 0.8rem;
+  padding: 0.8rem;
+  background: rgba(0, 0, 0, 0.22);
+  border: 2px dashed rgba(201, 162, 67, 0.45);
+  border-radius: 0.6rem;
+}
+
+.bebida .campo {
+  min-width: 0;
+}
+
+.bebida .campo-tipo {
+  grid-column: 1 / -1;
+  padding-right: 2.4rem;
+}
+
+.bebida select {
+  width: 100%;
+}
+
+.bebida .entrada-unidad input {
+  font-size: 1rem;
+}
+
+.contador {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.contador output {
+  min-width: 2ch;
+  text-align: center;
+  font-family: var(--fuente-cartel);
+  font-size: 1.2rem;
+  color: var(--neon-ambar);
+  font-variant-numeric: tabular-nums;
+}
+
+.contador button,
+.quitar,
+.anadir,
+.reintentar {
+  font: inherit;
+  font-weight: 800;
+  border: 2px solid var(--madera-borde);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.contador button {
+  width: 2.2rem;
+  height: 2.2rem;
+  color: var(--tinta);
+  background: linear-gradient(180deg, var(--laton-claro), var(--laton));
+}
+
+.quitar {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--papel);
+  background: #8f2420;
+}
+
+.anadir {
+  padding: 0.5rem 1rem;
+  color: var(--tinta);
+  background: var(--papel);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.contador button:disabled,
+.quitar:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* =====================================================================
+   Botón principal: tirador de cerveza rojo con remate de latón
+   ===================================================================== */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.25rem;
+  font-family: var(--fuente-cartel);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: #fff4e0;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, #e0443a, #a3201b);
+  border: 3px solid var(--laton);
+  border-radius: 0.8rem;
+  box-shadow:
+    0 6px 0 #5e1310,
+    0 10px 20px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.boton:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ec5348, #b2251f);
+}
+
+.boton:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 #5e1310;
+}
+
+.boton:disabled {
+  opacity: 0.8;
+  cursor: progress;
+}
+
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: giro 0.7s linear infinite;
+}
+
+@keyframes giro {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =====================================================================
+   Error: nota de "se debe" clavada
+   ===================================================================== */
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  font-family: var(--fuente-tiza);
+  font-weight: 700;
+  color: #4a0d10;
+  background: linear-gradient(180deg, #ffe3dc, #f6c9bf);
+  border-left: 8px solid #b3241f;
+  border-radius: 0.3rem;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.45);
+  transform: rotate(-0.6deg);
+}
+
+.error p {
+  margin: 0;
+}
+
+.reintentar {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  font-family: system-ui, sans-serif;
+  color: #fff4e0;
+  background: #b3241f;
+}
+
+/* =====================================================================
+   Resultado: la tele de tubo encima de la barra
+   ===================================================================== */
+.tele {
+  --color-nivel: var(--nivel-sobrio);
+  position: relative;
+  margin-top: 2.4rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.tele.nivel-alegre {
+  --color-nivel: var(--nivel-alegre);
+}
+.tele.nivel-borracho {
+  --color-nivel: var(--nivel-borracho);
+}
+.tele.nivel-peligroso {
+  --color-nivel: var(--nivel-peligroso);
+}
+
+/* Antena de cuernos */
+.tele::before,
+.tele::after {
+  content: '';
+  position: absolute;
+  top: -2.3rem;
+  left: 50%;
+  width: 3px;
+  height: 2.6rem;
+  background: #9aa0a6;
+  transform-origin: bottom center;
+}
+
+.tele::before {
+  transform: translateX(-6px) rotate(-32deg);
+}
+
+.tele::after {
+  transform: translateX(3px) rotate(28deg);
+}
+
+.tele-carcasa {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.9rem;
+  padding: 1rem;
+  background:
+    repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 18px),
+    linear-gradient(180deg, #7a4d26, #5a3519);
+  border: 3px solid var(--madera-borde);
+  border-radius: 1.1rem;
+  box-shadow:
+    0 10px 0 rgba(0, 0, 0, 0.35),
+    0 16px 30px rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Base de la antena */
+.tele-carcasa::before {
+  content: '';
+  position: absolute;
+  top: -0.7rem;
+  left: 50%;
+  width: 2.4rem;
+  height: 0.8rem;
+  margin-left: -1.2rem;
+  background: #2a2a2a;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.tele-pantalla {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 0.35rem;
+  align-content: center;
+  padding: 1rem 1.1rem;
+  color: var(--color-nivel);
+  font-family: var(--fuente-tele);
+  background: radial-gradient(ellipse at 50% 45%, #1d3a2c, #08130d 75%);
+  border: 6px solid #1a1a1a;
+  border-radius: 1.6rem / 2.2rem;
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.85),
+    0 0 0 3px #3a3a3a;
+  text-shadow: 0 0 6px currentColor;
+}
+
+/* Líneas de barrido y reflejo del cristal */
+.tele-pantalla::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(130deg, rgba(255, 255, 255, 0.1), transparent 35%),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.25) 0 1px, transparent 1px 3px);
+}
+
+.tele-canal {
+  margin: 0;
+  font-family: var(--fuente-tele);
+  font-weight: 400;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #b8f5cf;
+}
+
+.tasa {
+  margin: 0;
+  font-family: var(--fuente-tele);
+  font-size: clamp(3.2rem, 7vh, 4.4rem);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.tasa span {
+  font-size: 1.4rem;
+  opacity: 0.85;
+}
+
+.nivel {
+  margin: 0;
+  font-family: var(--fuente-tele);
+  font-size: 1.9rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.barra {
+  height: 0.9rem;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid currentColor;
+  overflow: hidden;
+}
+
+.barra-relleno {
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--color-nivel) 0 8px, transparent 8px 10px);
+  box-shadow: 0 0 8px var(--color-nivel);
+  transition: width 0.5s ease;
+}
+
+.dato {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #d8f7e2;
+}
+
+.dato strong {
+  white-space: nowrap;
+  font-weight: 400;
+  color: var(--color-nivel);
+}
+
+/* Panel lateral: canales, ruedas y rejilla del altavoz */
+.tele-panel {
+  display: grid;
+  gap: 0.7rem;
+  align-content: start;
+  justify-items: center;
+}
+
+.medidor {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  display: grid;
+  gap: 0.3rem;
+  background: #2a1a0e;
+  border: 2px solid var(--madera-borde);
+  border-radius: 0.4rem;
+}
+
+.medidor li {
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.25rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--texto-suave);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.medidor li.activo {
+  color: #0b1510;
+  background: var(--color-nivel);
+  box-shadow: 0 0 8px var(--color-nivel);
+}
+
+.tele-mandos {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.perilla {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  background:
+    linear-gradient(90deg, transparent 45%, #1a1a1a 45% 55%, transparent 55%),
+    radial-gradient(circle at 35% 35%, #d9d9d9, #6d6d6d);
+  border: 2px solid #1a1a1a;
+}
+
+.perilla + .perilla {
+  transform: rotate(60deg);
+}
+
+.rejilla {
+  width: 100%;
+  min-height: 2.6rem;
+  flex: 1;
+  background: repeating-linear-gradient(0deg, #2a1a0e 0 3px, #8a5a2e 3px 6px);
+  border: 2px solid var(--madera-borde);
+  border-radius: 0.3rem;
+}
+
+/* Pegatinas debajo de la tele */
+.tele-pegatinas {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.aviso {
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  font-weight: 800;
+  color: #fff4e0;
+  background: #8f2420;
+  border: 2px dashed #ffb0a8;
+  border-radius: 0.4rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.nota {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+/* =====================================================================
+   Pizarra: explicación del camarero y estado vacío
+   ===================================================================== */
+.pizarra {
+  --color-nivel: var(--nivel-alegre);
+  display: grid;
+  gap: 0.8rem;
+  padding: clamp(1rem, 2.4vh, 1.5rem);
+  color: #f1f1e6;
+  font-family: var(--fuente-tiza);
+  font-size: 1.05rem;
+  background:
+    radial-gradient(ellipse at 25% 20%, rgba(255, 255, 255, 0.08), transparent 55%),
+    radial-gradient(ellipse at 80% 85%, rgba(255, 255, 255, 0.05), transparent 50%),
+    #202a24;
+  border: 12px solid var(--madera-media);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 0 0 3px var(--madera-borde),
+    0 12px 26px rgba(0, 0, 0, 0.5),
+    inset 0 0 24px rgba(0, 0, 0, 0.6);
+}
+
+.titulo-tiza {
+  margin: 0;
+  font-family: var(--fuente-tiza);
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  color: #fffbe8;
+  text-decoration: underline wavy rgba(255, 224, 102, 0.6);
+  text-underline-offset: 7px;
+}
+
+.pizarra p {
+  margin: 0;
+}
+
+.pizarra .nota {
+  color: rgba(241, 241, 230, 0.75);
+}
+
+.pizarra-vacia {
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  min-height: 18rem;
+}
+
+.pizarra-vacia .jarra {
+  font-size: clamp(2.6rem, 7vh, 3.6rem);
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 192, 77, 0.5));
+}
+
+.medidor-fila {
+  grid-auto-flow: column;
+  background: transparent;
+  border: 0;
+}
+
+.medidor-fila li {
+  font-family: var(--fuente-tiza);
+  font-size: 0.9rem;
+  color: #f1f1e6;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cargando {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.consejos {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.consejos li::marker {
+  content: '✓  ';
+  color: var(--nivel-sobrio);
+}
+
+.alerta {
+  padding: 0.7rem 0.9rem;
+  font-family: system-ui, sans-serif;
+  font-weight: 800;
+  color: #3a070b;
+  background: var(--nivel-peligroso);
+  border-radius: 0.4rem;
+}
+
+/* =====================================================================
+   Accesibilidad y pantallas pequeñas
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .letrero,
+  .parpadeo {
+    animation: none;
+  }
+  .barra-relleno {
+    transition: none;
+  }
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
+@media (max-width: 520px) {
+  .contenedor {
+    padding-top: 1.2rem;
+  }
+  .rotulo {
+    padding: 1rem 0.9rem;
+  }
+  .rotulo-mini {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+  }
+  .cartel {
+    max-width: 17rem;
+    font-size: 0.95rem;
+  }
+  .tarjeta {
+    padding: 1rem 0.85rem;
+  }
+  .titulo {
+    font-size: 1.2rem;
+  }
+  .boton {
+    font-size: 1.15rem;
+  }
+  .medidor-fila {
+    grid-auto-flow: row;
+    grid-template-columns: 1fr 1fr;
+  }
+  .taburete {
+    width: 2.6rem;
+  }
+  /* Menos taburetes para que no se amontonen */
+  .taburete:nth-of-type(3n + 2) {
+    display: none;
+  }
+  .pie-barra {
+    height: 4.5rem;
+  }
+  .lampara-techo .luz {
+    width: 16rem;
+  }
+}
+
+/* Tele en columna estrecha: los canales pasan debajo de la pantalla */
+@container (max-width: 380px) {
+  .tele-carcasa {
+    grid-template-columns: 1fr;
+  }
+  .tele-panel {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+  .medidor {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .rejilla {
+    display: none;
+  }
+}
+
+/* Móviles muy estrechos: un campo por fila en cada bebida */
+@media (max-width: 400px) {
+  .bebida {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .segmento span {
+    font-size: 0.9rem;
+  }
+  .tasa {
+    font-size: 3rem;
+  }
+}
+
+/* =====================================================================
+   Ordenador: todo en una sola pantalla, sin desplazar la página.
+   Solo se desplazan por dentro la lista de bebidas y la pizarra si
+   no les cabe el contenido.
+   ===================================================================== */
+@media (min-width: 1024px) and (min-height: 560px) {
+  #app {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .contenedor {
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: clamp(0.6rem, 1.8vh, 1.2rem);
+    padding-top: clamp(0.7rem, 2.2vh, 1.6rem);
+    padding-bottom: clamp(0.4rem, 1.2vh, 0.9rem);
+  }
+
+  /* Cabecera compacta */
+  .rotulo {
+    padding: clamp(0.5rem, 1.4vh, 1rem) 1.25rem;
+    gap: 0;
+  }
+  .rotulo::before {
+    inset: 0.4rem;
+  }
+  .rotulo-mini {
+    font-size: 0.7rem;
+  }
+  .letrero {
+    font-size: clamp(2.2rem, 7vh, 4rem);
+  }
+  .lema {
+    font-size: 0.9rem;
+  }
+  .cartel {
+    padding: 0.9rem 1rem 0.6rem;
+    font-size: 0.95rem;
+  }
+
+  /* Escenario: las dos columnas ocupan el alto que queda */
+  .escenario {
+    min-height: 0;
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+    gap: clamp(0.9rem, 2vw, 1.5rem);
+  }
+
+  .formulario,
+  .columna-resultado {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.6rem, 1.6vh, 1rem);
+  }
+
+  /* Tarjetas más compactas */
+  .tarjeta {
+    padding: clamp(0.7rem, 1.8vh, 1.1rem) 1.1rem;
+    flex-shrink: 0;
+  }
+  .titulo {
+    font-size: 1.2rem;
+    margin-bottom: clamp(0.4rem, 1.2vh, 0.8rem);
+  }
+  .campos {
+    gap: clamp(0.5rem, 1.4vh, 0.9rem) 1.1rem;
+  }
+  .campo {
+    gap: 0.25rem;
+  }
+  .campo label,
+  .etiqueta {
+    font-size: 0.82rem;
+  }
+  .entrada-unidad input,
+  .bebida select {
+    padding: clamp(0.3rem, 0.9vh, 0.5rem) 0.65rem;
+    font-size: 0.98rem;
+  }
+  .segmento span {
+    padding: clamp(0.3rem, 0.9vh, 0.5rem) 0.3rem;
+  }
+
+  /* Bebidas: ocupa el hueco libre y desplaza su lista por dentro */
+  .tarjeta.bebidas {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 7.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .lista-bebidas {
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: 0;
+    padding-right: 0.3rem;
+    overflow-y: auto;
+    align-content: start;
+    gap: 0.5rem;
+    scrollbar-color: var(--laton) transparent;
+  }
+  .anadir {
+    position: absolute;
+    top: clamp(0.55rem, 1.6vh, 0.95rem);
+    right: 1.1rem;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  /* Cada bebida en dos filas compactas (o una sola si hay sitio, ver abajo) */
+  .formulario {
+    container-type: inline-size;
+  }
+  .bebida {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      'tipo tipo cantidad'
+      'volumen graduacion quitar';
+    align-items: end;
+    gap: 0.4rem 0.6rem;
+    padding: 0.5rem 0.6rem;
+  }
+  .bebida > :nth-child(1) {
+    grid-area: tipo;
+  }
+  .bebida > :nth-child(2) {
+    grid-area: volumen;
+  }
+  .bebida > :nth-child(3) {
+    grid-area: graduacion;
+  }
+  .bebida > :nth-child(4) {
+    grid-area: cantidad;
+  }
+  .bebida .campo-tipo {
+    grid-column: auto;
+    padding-right: 0;
+  }
+  .quitar {
+    grid-area: quitar;
+    position: static;
+    justify-self: end;
+    margin-bottom: 0.2rem;
+  }
+  .contador button {
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .boton {
+    flex-shrink: 0;
+    padding: clamp(0.5rem, 1.5vh, 0.85rem) 1rem;
+    font-size: 1.2rem;
+  }
+
+  /* Columna del resultado: la tele fija y la pizarra con el resto */
+  .tele {
+    flex-shrink: 0;
+    margin-top: 1.7rem;
+    gap: 0.5rem;
+  }
+  .tele::before,
+  .tele::after {
+    top: -1.7rem;
+    height: 2rem;
+  }
+  .tele-carcasa {
+    padding: 0.7rem;
+    gap: 0.7rem;
+  }
+  .tele-pantalla {
+    padding: clamp(0.5rem, 1.4vh, 0.9rem) 1rem;
+    gap: 0.2rem;
+  }
+  .tasa {
+    font-size: clamp(2.4rem, 6vh, 3.6rem);
+  }
+  .nivel {
+    font-size: 1.6rem;
+  }
+  .dato {
+    font-size: 1.1rem;
+  }
+  .rejilla {
+    min-height: 1.6rem;
+  }
+  .aviso {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  .nota {
+    font-size: 0.78rem;
+  }
+
+  .pizarra {
+    flex: 1 1 auto;
+    min-height: 6rem;
+    overflow-y: auto;
+    align-content: start;
+    padding: clamp(0.6rem, 1.6vh, 1.1rem) 1.1rem;
+    gap: 0.5rem;
+    scrollbar-color: rgba(241, 241, 230, 0.4) transparent;
+  }
+  .pizarra-vacia {
+    align-content: center;
+    min-height: 0;
+  }
+  .titulo-tiza {
+    font-size: 1.35rem;
+  }
+  .error {
+    flex-shrink: 0;
+    padding: 0.6rem 0.9rem;
+  }
+
+  /* Pie de barra más bajo */
+  .pie-barra {
+    height: clamp(2.6rem, 6vh, 4rem);
+  }
+  .taburete {
+    width: clamp(2.4rem, 5vh, 3.4rem);
+  }
+  .mostrador {
+    height: clamp(1.6rem, 3.4vh, 2.4rem);
+    border-top-width: 6px;
+  }
+}
+
+@media (min-width: 1024px) and (min-height: 560px) {
+  @container (min-width: 440px) {
+    .bebida {
+      grid-template-columns: minmax(0, 2fr) minmax(4.6rem, 1fr) minmax(4.2rem, 1fr) auto auto;
+      grid-template-areas: 'tipo volumen graduacion cantidad quitar';
+    }
+    /* Filas finas: etiquetas solo en la primera, como cabecera de tabla */
+    .bebida {
+      padding: 0.3rem 0.5rem;
+      gap: 0.5rem;
+    }
+    .bebida:not(:first-child) label,
+    .bebida:not(:first-child) .etiqueta {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .bebida .contador {
+      gap: 0.3rem;
+    }
+    /* Sin flechas de número para que quepan las cifras */
+    .bebida input[type='number'] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    .bebida input[type='number']::-webkit-inner-spin-button,
+    .bebida input[type='number']::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+  /* Tele en columna estrecha: canales en una fila bajo la pantalla, sin ruedas */
+  @container (max-width: 380px) {
+    .medidor {
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .medidor li {
+      padding: 0.15rem 0.3rem;
+      font-size: 0.72rem;
+    }
+    .tele-panel {
+      grid-template-columns: 1fr;
+    }
+    .tele-mandos {
+      display: none;
+    }
+  }
+}
+
+/* Pantallas de ordenador bajas: se esconde el lema para ganar sitio */
+@media (min-width: 1024px) and (max-height: 700px) {
+  .lema {
+    display: none;
+  }
+}
+
+/* Ordenador con pantalla no muy alta: todo un poco más pequeño para que
+   quepan al menos tres rondas sin desplazar */
+@media (min-width: 1024px) and (min-height: 560px) and (max-height: 860px) {
+  html {
+    font-size: 87.5%;
+  }
+  .lista-bebidas {
+    gap: 0.35rem;
+  }
+  .entrada-unidad input,
+  .bebida select {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.95rem;
+  }
+  .segmento span {
+    padding: 0.3rem;
+  }
+  .contador button {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+  .quitar {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+  .tarjeta {
+    padding: 0.6rem 1rem;
+  }
+  .titulo {
+    margin-bottom: 0.4rem;
+  }
+  .anadir {
+    top: 0.5rem;
+  }
+  .letrero {
+    font-size: clamp(2rem, 6vh, 3rem);
+  }
+  .boton {
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* Ordenador: tele compacta (tasa y nivel en la misma línea) para dejar
+   sitio a la pizarra del camarero */
+@media (min-width: 1024px) and (min-height: 560px) {
+  .tele-pantalla {
+    grid-template-columns: auto 1fr;
+    align-items: baseline;
+    column-gap: 1rem;
+    padding: clamp(0.4rem, 1.2vh, 0.8rem) 0.9rem;
+  }
+  .tele-canal,
+  .barra,
+  .dato {
+    grid-column: 1 / -1;
+  }
+  .nivel {
+    justify-self: end;
+    font-size: 1.35rem;
+  }
+  .tasa {
+    font-size: clamp(2rem, 5vh, 3rem);
+  }
+  .tele-canal {
+    font-size: 0.9rem;
+  }
+  .dato {
+    font-size: 1rem;
+  }
+  .tele-pegatinas {
+    gap: 0.3rem;
+  }
+  /* La pizarra del camarero siempre se ve */
+  .explicacion {
+    min-height: 9rem;
+  }
+}
+
+/* Ordenador: columnas equilibradas, tele baja y pizarra con más sitio */
+@media (min-width: 1024px) and (min-height: 560px) {
+  .escenario {
+    grid-template-columns: 1.15fr 1fr;
+  }
+  .tele-mandos,
+  .rejilla {
+    display: none;
+  }
+  .tele-panel {
+    align-content: center;
+  }
+  .medidor li {
+    padding: 0.1rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  .aviso {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.85rem;
+  }
+  .nota {
+    font-size: 0.75rem;
+  }
+  .explicacion {
+    font-size: 0.95rem;
+    gap: 0.35rem;
+  }
+  .explicacion .titulo-tiza {
+    font-size: 1.2rem;
+    text-underline-offset: 5px;
+  }
+  .consejos {
+    gap: 0.15rem;
+  }
+}
