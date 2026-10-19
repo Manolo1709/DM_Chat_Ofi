@@ -1,6 +1,7 @@
 """Persona B: pruebas del cliente de IA (sin llamadas reales) y de los 422 de bebidas."""
 
 import json
+import logging
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -10,6 +11,7 @@ from fastapi.testclient import TestClient
 from api import ia
 from api.index import app
 from api.calculo import calcular_tasa
+from api import registro
 from api.schemas import CalculoRequest
 
 client = TestClient(app)
@@ -152,6 +154,7 @@ def test_calcular_con_ia():
     assert cuerpo["tasa_gl"] == 0.42
     assert cuerpo["nivel"] == "alegre"
     assert cuerpo["horas_hasta_cero"] == 2.8
+    assert cuerpo["origen"] == "ia"
     assert "No conduzcas" in cuerpo["aviso_conduccion"]
 
 
@@ -165,6 +168,7 @@ def test_calcular_si_la_ia_falla_usa_fallback():
     assert cuerpo["tasa_gl"] == round(calcular_tasa(CalculoRequest.model_validate(PETICION)), 2)
     assert cuerpo["consejos"]
     assert "No se ha podido generar" in cuerpo["explicacion"]
+    assert cuerpo["origen"] == "respaldo"
 
 
 @pytest.mark.parametrize(
@@ -183,3 +187,34 @@ def test_422_bebidas(bebidas):
         res = client.post("/api/calcular", json={**PETICION, "bebidas": bebidas})
     assert res.status_code == 422
     post.assert_not_called()
+
+
+# --- Registro de errores -------------------------------------------------------
+
+
+def test_fallo_de_la_ia_se_anota_sin_datos_del_usuario(caplog, monkeypatch):
+    monkeypatch.setattr(logging.getLogger("taberna"), "propagate", True)
+    with caplog.at_level(logging.WARNING, logger="taberna"):
+        with patch("api.ia.httpx.post", side_effect=httpx.ReadTimeout("lento")):
+            res = client.post("/api/calcular", json=PETICION)
+
+    assert res.status_code == 200
+    assert "IA no disponible" in caplog.text
+    assert "a tiempo" in caplog.text and "ReadTimeout" in caplog.text
+    # Nada de la petición ni de la clave llega al registro
+    assert "clave-de-prueba" not in caplog.text
+    assert "70" not in caplog.text and "vino" not in caplog.text
+
+
+def test_los_errores_se_escriben_en_el_archivo(tmp_path):
+    ruta = tmp_path / "logs" / "errores.txt"
+    log = registro.crear_logger("taberna-prueba", ruta)
+    log.info("mensaje informativo")
+    log.warning("IA no disponible, se usa la fórmula: prueba")
+    for h in log.handlers:
+        h.flush()
+
+    texto = ruta.read_text(encoding="utf-8")
+    assert "[WARNING] IA no disponible, se usa la fórmula: prueba" in texto
+    # Los mensajes informativos no se guardan en el archivo
+    assert "informativo" not in texto

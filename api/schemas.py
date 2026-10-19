@@ -31,6 +31,11 @@ class NivelEnum(str, Enum):
     peligroso = "peligroso"
 
 
+class OrigenEnum(str, Enum):
+    ia = "ia"
+    respaldo = "respaldo"
+
+
 # Mismos límites que LIMITES en src/types/alcohol.ts
 PESO_MIN, PESO_MAX = 30, 250
 TIEMPO_MAX = 24
@@ -58,6 +63,7 @@ class CalculoResponse(BaseModel):
     explicacion: str
     consejos: list[str]
     aviso_conduccion: str
+    origen: OrigenEnum
 
 
 class ExplicacionIA(BaseModel):

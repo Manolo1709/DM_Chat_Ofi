@@ -1,6 +1,5 @@
 """API FastAPI: punto de entrada local (uvicorn) y función serverless de Vercel."""
 
-import logging
 import sys
 from pathlib import Path
 
@@ -11,11 +10,11 @@ from dotenv import load_dotenv  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
 
 from api import ia  # noqa: E402
+from api.registro import logger  # noqa: E402
 from api.calculo import calcular_tasa, clasificar_nivel, horas_hasta_cero  # noqa: E402
-from api.schemas import CalculoRequest, CalculoResponse  # noqa: E402
+from api.schemas import CalculoRequest, CalculoResponse, OrigenEnum  # noqa: E402
 
 load_dotenv()
-logger = logging.getLogger("uvicorn.error")
 
 # El frontend muestra siempre debajo "Estimación orientativa. No sustituye a un alcoholímetro."
 AVISO_CONDUCCION = "No conduzcas si has bebido alcohol, aunque la estimación sea baja."
@@ -35,12 +34,15 @@ def calcular(datos: CalculoRequest) -> CalculoResponse:
         texto = ia.calcular_con_ia(datos)
         tasa = texto.tasa_gl
         nivel = clasificar_nivel(tasa)
-        logger.info("Tasa calculada por la IA: %.2f g/L (fórmula: %.2f)", tasa, calcular_tasa(datos))
+        origen = OrigenEnum.ia
     except ia.IAError as e:
-        logger.warning("IA no disponible, se usa la fórmula: %s (%r)", e, e.__cause__)
+        # Solo se anota el motivo, nunca los datos del usuario ni la respuesta de la IA
+        causa = type(e.__cause__).__name__ if e.__cause__ else "sin causa"
+        logger.warning("IA no disponible, se usa la fórmula: %s [%s]", e, causa)
         tasa = calcular_tasa(datos)
         nivel = clasificar_nivel(tasa)
         texto = ia.explicacion_generica(nivel)
+        origen = OrigenEnum.respaldo
 
     return CalculoResponse(
         tasa_gl=round(tasa, 2),
@@ -49,4 +51,5 @@ def calcular(datos: CalculoRequest) -> CalculoResponse:
         explicacion=texto.explicacion,
         consejos=texto.consejos,
         aviso_conduccion=AVISO_CONDUCCION,
+        origen=origen,
     )

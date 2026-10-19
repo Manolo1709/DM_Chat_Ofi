@@ -385,14 +385,14 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 | Fuente | FUE-01 |
 | Precondiciones | Ha fallado RF-10. |
 | Entradas | Datos validados. |
-| Comportamiento esperado | Calcula la tasa según RF-04, el nivel según RF-05, y usa una explicación genérica y consejos propios del nivel. El fallo se registra en el log del servidor. |
+| Comportamiento esperado | Calcula la tasa según RF-04, el nivel según RF-05, y usa una explicación genérica y consejos propios del nivel. El fallo se anota, solo con su motivo, en la consola del servidor y, en local, en `logs/errores.txt`. La respuesta indica `origen` igual a «respaldo». |
 | Salidas y postcondiciones | Respuesta con el mismo formato que con IA, sin error visible. |
 | Errores o alternativas | Ninguna. |
 | Dependencias | RF-04, RF-05, RF-10 |
 
 **Criterios de aceptación:**
 
-- **CA-RF11-01:** Dado un servidor sin clave de IA, cuando se solicita un cálculo válido, entonces responde con tasa, nivel, horas hasta cero, explicación y consejos.
+- **CA-RF11-01:** Dado un servidor sin clave de IA, cuando se solicita un cálculo válido, entonces responde con tasa, nivel, horas hasta cero, explicación y consejos, con el campo `origen` igual a «respaldo».
 - **CA-RF11-02:** Dado un nivel peligroso con la IA caída, cuando se solicita el cálculo, entonces los consejos incluyen dejar de beber y llamar al 112.
 
 #### RF-12. Informar de los errores y permitir reintentar
@@ -440,7 +440,7 @@ El sistema no guarda ningún dato entre solicitudes (RES-04). Los datos existen 
 | DAT-01 | Persona | Peso (kg, entero), sexo (hombre o mujer), horas bebiendo (decimal), estómago (vacío, algo o lleno). | Peso de 30 a 250. Horas de 0 a 24. Sexo y estómago, solo los valores de la lista. Todos obligatorios. | El usuario los introduce. No se conservan. |
 | DAT-02 | Bebida | Tipo (cerveza, vino, licor, cóctel u otro), volumen (ml, entero), graduación (% vol., decimal), cantidad (entero). | Volumen de 1 a 2000. Graduación de 0 a 100. Cantidad de 1 a 50. Todos obligatorios. | El usuario las introduce. No se conservan. |
 | DAT-03 | Solicitud de cálculo | Los campos de DAT-01 y una lista de DAT-02. | Entre 1 y 50 bebidas. | Viaja del navegador al servidor. No se conserva. |
-| DAT-04 | Resultado | Tasa (g/L, mayor o igual que 0), nivel, horas hasta cero (mayor o igual que 0), explicación, lista de consejos y aviso de conducción. | La tasa y las horas se redondean a dos decimales. | Se muestra al usuario. No se conserva. |
+| DAT-04 | Resultado | Tasa (g/L, mayor o igual que 0), nivel, horas hasta cero (mayor o igual que 0), explicación, lista de consejos, aviso de conducción y origen (ia o respaldo). | La tasa y las horas se redondean a dos decimales. | Se muestra al usuario. No se conserva. |
 | DAT-05 | Respuesta de la IA | Tasa, explicación (1 a 2000 caracteres) y consejos (1 a 6). | La tasa debe estar entre 0 y 6 g/L. Si no cumple el formato, se descarta. | Solo se usa para construir DAT-04. No se conserva. |
 
 ### 5.2. Reglas de negocio
@@ -661,7 +661,8 @@ Respuesta:
   "horas_hasta_cero": 3.33,
   "explicacion": "Texto de la explicación.",
   "consejos": ["Consejo 1", "Consejo 2"],
-  "aviso_conduccion": "No conduzcas si has bebido alcohol, aunque la estimación sea baja."
+  "aviso_conduccion": "No conduzcas si has bebido alcohol, aunque la estimación sea baja.",
+  "origen": "ia"
 }
 ```
 

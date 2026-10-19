@@ -11,6 +11,7 @@ const MOCK: CalculoResponse = {
   explicacion: 'Respuesta de ejemplo para diseñar la interfaz.',
   consejos: ['Bebe agua entre copa y copa.', 'Evita seguir bebiendo.'],
   aviso_conduccion: 'No conduzcas si has bebido alcohol.',
+  origen: 'ia',
 }
 
 // Error con el código HTTP (0 si ni siquiera hubo respuesta)

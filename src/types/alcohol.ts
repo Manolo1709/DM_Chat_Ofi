@@ -4,6 +4,7 @@ export type Sexo = 'hombre' | 'mujer'
 export type Estomago = 'vacio' | 'algo' | 'lleno'
 export type TipoBebida = 'cerveza' | 'vino' | 'licor' | 'coctel' | 'otro'
 export type Nivel = 'sobrio' | 'alegre' | 'borracho' | 'peligroso'
+export type Origen = 'ia' | 'respaldo'
 
 export interface Bebida {
   tipo: TipoBebida
@@ -31,6 +32,7 @@ export interface CalculoResponse {
   explicacion: string
   consejos: string[]
   aviso_conduccion: string
+  origen: Origen
 }
 
 export const LIMITES = {

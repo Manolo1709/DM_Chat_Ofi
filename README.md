@@ -63,3 +63,12 @@ La aplicación muestra:
 ## Criterio de éxito
 
 Con distintas combinaciones de bebidas, peso, sexo, tiempo y estómago, la página devuelve una tasa estimada coherente, explica el nivel de embriaguez y deja claro que es una aproximación y que no se debe conducir tras beber.
+
+## Registro de errores
+
+Si la IA falla, la API responde igualmente con la fórmula de Widmark (`origen: "respaldo"`) y anota el motivo:
+
+- **Consola:** el mensaje sale en la terminal donde se ejecuta uvicorn (y en la pestaña Logs de Vercel).
+- **Archivo:** en local, los avisos y errores se guardan en `logs/errores.txt` (ignorado por Git). En Vercel no se escribe archivo porque el sistema es de solo lectura.
+- Solo se registra el motivo (por ejemplo «El modelo no respondió a tiempo»), nunca los datos del usuario, la clave ni la respuesta de la IA.
+- `LOG_ARCHIVO=false` desactiva el archivo (lo usan las pruebas).
