@@ -290,10 +290,47 @@ rect.tubo.rojo {
   gap: 1rem;
 }
 
+.auth-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.auth-button {
+  border: 2px solid var(--laton);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 150ms ease, filter 150ms ease;
+}
+
+.auth-button:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+.auth-button-primary {
+  background: var(--madera-media);
+}
+
+.auth-button-secondary {
+  background: rgba(21, 16, 12, 0.8);
+}
+
 @media (min-width: 820px) {
   .cabecera {
     grid-template-columns: 1fr auto;
     align-items: center;
+  }
+
+  .auth-controls {
+    grid-column: 1 / -1;
+    justify-self: end;
   }
 }
 

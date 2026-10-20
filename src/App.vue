@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/vue'
 import BebidasLista from './components/BebidasLista.vue'
 import ErrorCard from './components/ErrorCard.vue'
 import ExplicacionPanel from './components/ExplicacionPanel.vue'
@@ -50,6 +51,19 @@ async function handleSubmit() {
         <span class="chincheta" aria-hidden="true"></span>
         Si bebes, no conduzcas. Pide un taxi.
       </p>
+      <nav class="auth-controls" aria-label="Autenticación">
+        <Show when="signed-out">
+          <SignInButton mode="modal">
+            <button class="auth-button auth-button-secondary" type="button">Entrar</button>
+          </SignInButton>
+          <SignUpButton mode="modal">
+            <button class="auth-button auth-button-primary" type="button">Crear cuenta</button>
+          </SignUpButton>
+        </Show>
+        <Show when="signed-in">
+          <UserButton />
+        </Show>
+      </nav>
     </header>
 
     <div class="escenario">

@@ -80,6 +80,7 @@ const RESPUESTA: CalculoResponse = {
   explicacion: 'Estás algo alegre.',
   consejos: ['Bebe agua.'],
   aviso_conduccion: 'No conduzcas.',
+  origen: 'ia',
 }
 
 describe('App con fetch mockeado', () => {

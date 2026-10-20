@@ -55,6 +55,7 @@ const resultado: CalculoResponse = {
   explicacion: '',
   consejos: [],
   aviso_conduccion: 'No conduzcas si has bebido alcohol.',
+  origen: 'ia',
 }
 
 describe('ResultadoPanel', () => {

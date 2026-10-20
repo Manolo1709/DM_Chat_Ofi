@@ -15,6 +15,7 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    setupFiles: ['./tests/setup.ts'],
     // Las pruebas usan fetch mockeado, nunca la respuesta de ejemplo
     env: { VITE_USE_MOCK: 'false' },
   },

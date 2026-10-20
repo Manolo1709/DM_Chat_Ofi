@@ -1,5 +1,13 @@
+import { clerkPlugin } from '@clerk/vue';
 import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+if (!PUBLISHABLE_KEY) {
+  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY. Add your key to .env.local.\nRun: 1) clerk auth login  2) clerk link  3) clerk env pull — then restart the dev server.");
+}
+
+const app = createApp(App);
+app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY });
+app.mount('#app')
