@@ -79,3 +79,32 @@ const tiempoCero = computed(() => {
     </div>
   </section>
 </template>
+
+<!-- import { useAuth } from '@clerk/vue'
+
+const { getToken } = useAuth()
+
+async function calcular(datos) {
+  const token = await getToken()
+
+  if (!token) {
+    throw new Error('Debes iniciar sesión')
+  }
+
+  const response = await fetch('http://localhost:8000/api/calcular', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(datos)
+  })
+
+  const resultado = await response.json()
+
+  if (!response.ok) {
+    throw new Error(resultado.detail || 'Error al calcular')
+  }
+
+  return resultado
+} -->

@@ -14,6 +14,25 @@ from api.registro import logger  # noqa: E402
 from api.calculo import calcular_tasa, clasificar_nivel, horas_hasta_cero  # noqa: E402
 from api.schemas import CalculoRequest, CalculoResponse, OrigenEnum  # noqa: E402
 
+
+# imports de clerk:
+import os
+import time
+import threading
+
+from collections import defaultdict, deque
+from datetime import datetime, timezone
+from typing import Annotated
+
+from fastapi import Depends, HTTPException, Request
+from clerk_backend_api import (
+    authenticate_request,
+    AuthenticateRequestOptions,
+)
+
+
+
+
 load_dotenv()
 
 # El frontend muestra siempre debajo "Estimación orientativa. No sustituye a un alcoholímetro."
@@ -22,13 +41,99 @@ AVISO_CONDUCCION = "No conduzcas si has bebido alcohol, aunque la estimación se
 app = FastAPI(title="Calculadora de alcohol en sangre")
 
 
+def verificar_usuario(request: Request) -> str:
+    # El frontend debe enviar Authorization: Bearer <token>
+    if not request.headers.get("Authorization", "").startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Debes iniciar sesión",
+        )
+
+    try:
+        estado = authenticate_request(
+            request,
+            AuthenticateRequestOptions(
+                secret_key=os.environ["CLERK_SECRET_KEY"],
+                publishable_key=os.environ["CLERK_PUBLISHABLE_KEY"],
+                jwt_key=os.environ["CLERK_JWT_KEY"],
+                authorized_parties=[
+                    origen.strip()
+                    for origen in os.environ["FRONTEND_ORIGIN"].split(",")
+                ],
+                accepts_token=["session_token"],
+            ),
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Sesión no válida",
+        )
+
+    if not estado.is_signed_in:
+        raise HTTPException(
+            status_code=401,
+            detail="Sesión no válida o caducada",
+        )
+
+    usuario_id = (estado.payload or {}).get("sub")
+
+    if not usuario_id:
+        raise HTTPException(
+            status_code=401,
+            detail="No se ha podido identificar al usuario",
+        )
+
+    return usuario_id
+
+MAX_POR_MINUTO = 10
+MAX_POR_DIA = 50
+
+peticiones_minuto = defaultdict(deque)
+peticiones_dia = defaultdict(int)
+bloqueo = threading.Lock()
+
+
+def limitar_usuario(usuario_id: str) -> None:
+    ahora = time.monotonic()
+    hoy = datetime.now(timezone.utc).date().isoformat()
+
+    with bloqueo:
+        recientes = peticiones_minuto[usuario_id]
+
+        while recientes and ahora - recientes[0] >= 60:
+            recientes.popleft()
+
+        clave_dia = (usuario_id, hoy)
+
+        if peticiones_dia[clave_dia] >= MAX_POR_DIA:
+            raise HTTPException(
+                status_code=429,
+                detail="Has alcanzado el límite diario",
+            )
+
+        if len(recientes) >= MAX_POR_MINUTO:
+            raise HTTPException(
+                status_code=429,
+                detail="Demasiadas peticiones. Espera un minuto",
+            )
+
+        # Contamos la petición antes de llamar al modelo.
+        recientes.append(ahora)
+        peticiones_dia[clave_dia] += 1
+
+
+
 @app.get("/api/health")
 def health() -> dict:
     return {"status": "ok"}
 
 
 @app.post("/api/calcular", response_model=CalculoResponse)
-def calcular(datos: CalculoRequest) -> CalculoResponse:
+def calcular(
+    datos: CalculoRequest,
+    usuario_id: Annotated[str, Depends(verificar_usuario)],) -> CalculoResponse:
+    limitar_usuario(usuario_id)
+
     # La IA calcula la tasa; si falla, se usa la fórmula con una explicación genérica
     try:
         texto = ia.calcular_con_ia(datos)

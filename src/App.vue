@@ -11,6 +11,13 @@ import { bebidaPorDefecto } from './data/catalogo'
 import { calcular } from './services/api'
 import type { Bebida, CalculoResponse, DatosPersona } from './types/alcohol'
 
+
+//parte de clerk y control de usuario
+import {useAuth} from '@clerk/vue'
+
+const {isLoaded, isSignedIn} = useAuth()
+
+
 const persona = ref<DatosPersona>({
   peso_kg: 70,
   sexo: 'hombre',
@@ -40,6 +47,8 @@ async function handleSubmit() {
 <template>
   <TabernaDecor />
 
+
+
   <main class="contenedor">
     <header class="cabecera">
       <div class="rotulo">
@@ -51,21 +60,29 @@ async function handleSubmit() {
         <span class="chincheta" aria-hidden="true"></span>
         Si bebes, no conduzcas. Pide un taxi.
       </p>
-      <nav class="auth-controls" aria-label="Autenticación">
-        <Show when="signed-out">
-          <SignInButton mode="modal">
-            <button class="auth-button auth-button-secondary" type="button">Entrar</button>
-          </SignInButton>
-          <SignUpButton mode="modal">
-            <button class="auth-button auth-button-primary" type="button">Crear cuenta</button>
-          </SignUpButton>
-        </Show>
-        <Show when="signed-in">
-          <UserButton />
-        </Show>
-      </nav>
-    </header>
 
+      </header>
+              <div v-if="!isLoaded">
+          Cargando aplicacion...
+        </div>
+
+        <div v-else-if="!isSignedIn">
+          <nav class="auth-controls" aria-label="Autenticación">
+              <Show when="signed-out">
+                <SignInButton mode="modal">
+                  <button class="auth-button auth-button-secondary" type="button">Entrar</button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <button class="auth-button auth-button-primary" type="button">Crear cuenta</button>
+                </SignUpButton>
+              </Show>
+
+            </nav>
+        </div>
+        <div v-else>
+              <Show when="signed-in">
+                <UserButton />
+              </Show>
     <div class="escenario">
       <form class="formulario" @submit.prevent="handleSubmit">
         <PersonaForm v-model="persona" :disabled="loading" />
@@ -104,5 +121,7 @@ async function handleSubmit() {
         </section>
       </div>
     </div>
+    </div>
   </main>
+  
 </template>
