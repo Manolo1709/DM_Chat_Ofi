@@ -31,7 +31,14 @@ const MENSAJES: Record<number, string> = {
   502: 'El servicio de explicación no responde. Inténtalo de nuevo.',
 }
 
-export async function calcular(datos: CalculoRequest): Promise<CalculoResponse> {
+export async function calcular(datos: CalculoRequest, token:string): Promise<CalculoResponse> 
+{
+ 
+
+  if (!token) {
+    throw new Error('Debes iniciar sesión')
+  }
+
   if (USAR_MOCK) {
     await new Promise((r) => setTimeout(r, 600))
     return MOCK
@@ -41,7 +48,9 @@ export async function calcular(datos: CalculoRequest): Promise<CalculoResponse> 
   try {
     res = await fetch('/api/calcular', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+       },
       body: JSON.stringify(datos),
     })
   } catch {

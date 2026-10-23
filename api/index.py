@@ -33,7 +33,7 @@ from clerk_backend_api import (
 
 
 
-load_dotenv()
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 # El frontend muestra siempre debajo "Estimación orientativa. No sustituye a un alcoholímetro."
 AVISO_CONDUCCION = "No conduzcas si has bebido alcohol, aunque la estimación sea baja."
@@ -54,8 +54,6 @@ def verificar_usuario(request: Request) -> str:
             request,
             AuthenticateRequestOptions(
                 secret_key=os.environ["CLERK_SECRET_KEY"],
-                publishable_key=os.environ["CLERK_PUBLISHABLE_KEY"],
-                jwt_key=os.environ["CLERK_JWT_KEY"],
                 authorized_parties=[
                     origen.strip()
                     for origen in os.environ["FRONTEND_ORIGIN"].split(",")
@@ -63,16 +61,20 @@ def verificar_usuario(request: Request) -> str:
                 accepts_token=["session_token"],
             ),
         )
-    except Exception:
+    except Exception as e:
+        logger.exception("Error verificando el token de Clerk")
         raise HTTPException(
             status_code=401,
-            detail="Sesión no válida",
-        )
+            detail="Error interno al verificar la sesión",
+        ) from e
 
     if not estado.is_signed_in:
+        motivo = getattr(estado.reason, "name", None) or str(estado.reason)
+        logger.warning("Clerk rechazó el token: %s", motivo)
+
         raise HTTPException(
             status_code=401,
-            detail="Sesión no válida o caducada",
+            detail=motivo,
         )
 
     usuario_id = (estado.payload or {}).get("sub")

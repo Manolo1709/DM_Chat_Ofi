@@ -16,6 +16,7 @@ import type { Bebida, CalculoResponse, DatosPersona } from './types/alcohol'
 import {useAuth} from '@clerk/vue'
 
 const {isLoaded, isSignedIn} = useAuth()
+const {getToken} = useAuth()
 
 
 const persona = ref<DatosPersona>({
@@ -31,10 +32,15 @@ const error = ref<string | null>(null)
 const resultado = ref<CalculoResponse | null>(null)
 
 async function handleSubmit() {
+  const token = await getToken.value()
+
+  if (!token) {
+    throw new Error('Debes iniciar sesion')
+  }
   loading.value = true
   error.value = null
   try {
-    resultado.value = await calcular({ ...persona.value, bebidas: bebidas.value })
+    resultado.value = await calcular({ ...persona.value, bebidas: bebidas.value },token)
   } catch (e) {
     resultado.value = null
     error.value = e instanceof Error ? e.message : 'No se pudo calcular el resultado.'
