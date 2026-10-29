@@ -42,6 +42,24 @@ app = FastAPI(title="Calculadora de alcohol en sangre")
 
 
 def verificar_usuario(request: Request) -> str:
+    try:
+        secret_key = os.environ["CLERK_SECRET_KEY"]
+        origenes = [origen.strip() for origen in os.environ["FRONTEND_ORIGIN"].split(",")]
+        origenes = [origen for origen in origenes if origen]
+        if not secret_key.strip() or not origenes:
+            raise ValueError("CLERK_SECRET_KEY y FRONTEND_ORIGIN son obligatorios")
+    except (KeyError, ValueError) as e:
+        logger.exception("Configuración de Clerk incompleta")
+        raise HTTPException(
+            status_code=500,
+            detail="La autenticación no está configurada correctamente",
+        ) from e
+
+    # En producción puede existir además un origen publicado por AWS.
+    origen_aws = os.getenv("AWS_URL", "").strip()
+    if origen_aws and origen_aws not in origenes:
+        origenes.append(origen_aws)
+
     # El frontend debe enviar Authorization: Bearer <token>
     if not request.headers.get("Authorization", "").startswith("Bearer "):
         raise HTTPException(
@@ -53,11 +71,8 @@ def verificar_usuario(request: Request) -> str:
         estado = authenticate_request(
             request,
             AuthenticateRequestOptions(
-                secret_key=os.environ["CLERK_SECRET_KEY"],
-                authorized_parties=[
-                    origen.strip()
-                    for origen in os.environ["FRONTEND_ORIGIN"].split(",")
-                ],
+                secret_key=secret_key,
+                authorized_parties=origenes,
                 accepts_token=["session_token"],
             ),
         )

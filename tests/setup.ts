@@ -1,4 +1,5 @@
 import { h } from 'vue'
+import { ref } from 'vue'
 import { vi } from 'vitest'
 
 vi.mock('@clerk/vue', () => ({
@@ -19,4 +20,9 @@ vi.mock('@clerk/vue', () => ({
     },
   },
   UserButton: { template: '<button type="button">Usuario</button>' },
+  useAuth: vi.fn(() => ({
+    isLoaded: ref(true),
+    isSignedIn: ref(true),
+    getToken: ref(vi.fn().mockResolvedValue('token-de-prueba')),
+  })),
 }))

@@ -97,12 +97,15 @@ describe('App con fetch mockeado', () => {
     const cuerpo = JSON.parse(fetchMock.mock.calls[0]![1].body)
     expect(cuerpo.bebidas).toHaveLength(1)
     expect(cuerpo.peso_kg).toBe(70)
+    expect(fetchMock.mock.calls[0]![1].headers.Authorization).toBe('Bearer token-de-prueba')
     expect(w.find('.tasa').text()).toContain('0.45')
     expect(w.find('[data-test="explicacion"]').text()).toBe('Estás algo alegre.')
   })
 
   it.each([
+    [401, 'iniciar sesión'],
     [422, 'no son válidos'],
+    [429, 'límite de peticiones'],
     [500, 'problema'],
     [502, 'explicación no responde'],
   ])('muestra la tarjeta de error para %i', async (status, texto) => {
