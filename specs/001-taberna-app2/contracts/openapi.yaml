@@ -1,0 +1,94 @@
+openapi: 3.1.0
+info:
+  title: La Taberna API (App 2)
+  version: 1.0.0
+  description: >
+    Calcula una estimación de la tasa de alcohol en sangre. Requiere una sesión
+    de Clerk. No se guarda ningún dato.
+servers:
+  - url: /api
+paths:
+  /health:
+    get:
+      summary: Comprobación de vida (la usa el HEALTHCHECK de Docker)
+      security: []
+      responses:
+        "200":
+          description: Servicio activo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, const: ok }
+  /calcular:
+    post:
+      summary: Calcula la tasa, el nivel y la explicación
+      security:
+        - clerkSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CalculoRequest" }
+      responses:
+        "200":
+          description: Resultado (con la IA o con el respaldo)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CalculoResponse" }
+        "401":
+          description: Sin token, token inválido o emitido para otro origen. No se llama a la IA.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: Datos fuera de límites o mal formados. No se llama a la IA.
+        "429":
+          description: Límite por usuario superado (10 por minuto o 50 al día).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+components:
+  securitySchemes:
+    clerkSession:
+      type: http
+      scheme: bearer
+      description: Token de sesión emitido por Clerk (getToken()).
+  schemas:
+    Bebida:
+      type: object
+      required: [tipo, volumen_ml, graduacion, cantidad]
+      properties:
+        tipo: { type: string, enum: [cerveza, vino, licor, coctel, otro] }
+        volumen_ml: { type: integer, exclusiveMinimum: 0, maximum: 2000 }
+        graduacion: { type: number, minimum: 0, maximum: 100 }
+        cantidad: { type: integer, minimum: 1, maximum: 50 }
+    CalculoRequest:
+      type: object
+      required: [peso_kg, sexo, tiempo_horas, estomago, bebidas]
+      properties:
+        peso_kg: { type: integer, minimum: 30, maximum: 250 }
+        sexo: { type: string, enum: [hombre, mujer] }
+        tiempo_horas: { type: number, minimum: 0, maximum: 24 }
+        estomago: { type: string, enum: [vacio, algo, lleno] }
+        bebidas:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items: { $ref: "#/components/schemas/Bebida" }
+    CalculoResponse:
+      type: object
+      required: [tasa_gl, nivel, horas_hasta_cero, explicacion, consejos, aviso_conduccion, origen]
+      properties:
+        tasa_gl: { type: number, minimum: 0 }
+        nivel: { type: string, enum: [sobrio, alegre, borracho, peligroso] }
+        horas_hasta_cero: { type: number, minimum: 0 }
+        explicacion: { type: string }
+        consejos: { type: array, items: { type: string } }
+        aviso_conduccion: { type: string }
+        origen: { type: string, enum: [ia, respaldo] }
+    Error:
+      type: object
+      properties:
+        detail: { type: string }
