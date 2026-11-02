@@ -70,10 +70,10 @@ description: "Lista de tareas de La Taberna (App 2)"
 
 ### Pruebas
 
-- [ ] T018 [P] [US2] Prueba: sin cabecera `Authorization` → 401 y el mock de la IA no se llama, en `api/test_auth.py`
-- [ ] T019 [P] [US2] Prueba: token inválido (simulando `authenticate_request` con `is_signed_in=False`) → 401 sin llamar a la IA, en `api/test_auth.py`
-- [ ] T020 [P] [US2] Prueba: 11 peticiones en un minuto → la undécima da 429, en `api/test_auth.py`
-- [ ] T021 [US2] Hacer que las pruebas existentes sustituyan `verificar_usuario` con `app.dependency_overrides` en `api/conftest.py`
+- [X] T018 [P] [US2] Prueba: sin cabecera `Authorization` → 401 y el mock de la IA no se llama, en `api/test_auth.py`
+- [X] T019 [P] [US2] Prueba: token inválido (simulando `authenticate_request` con `is_signed_in=False`) → 401 sin llamar a la IA, en `api/test_auth.py`
+- [X] T020 [P] [US2] Prueba: 11 peticiones en un minuto → la undécima da 429, en `api/test_auth.py`
+- [X] T021 [US2] Hacer que las pruebas existentes sustituyan `verificar_usuario` con `app.dependency_overrides` en `api/conftest.py`
 
 ### Implementación
 
@@ -82,7 +82,7 @@ description: "Lista de tareas de La Taberna (App 2)"
 - [X] T024 [US2] `verificar_usuario` con `authenticate_request` y `authorized_parties` en `api/index.py`
 - [X] T025 [US2] `limitar_usuario` (10/min, 50/día) en `api/index.py`
 - [ ] T026 [US2] Eliminar `src/views/sign-in.vue`, `src/views/sign-up.vue` y la dependencia `vue-router` (principio I: sin rutas)
-- [ ] T027 [US2] Responder 500, no 401, si faltan `CLERK_SECRET_KEY` o `FRONTEND_ORIGIN` en el servidor
+- [X] T027 [US2] Responder 500, no 401, si faltan `CLERK_SECRET_KEY` o `FRONTEND_ORIGIN` en el servidor
 
 ---
 

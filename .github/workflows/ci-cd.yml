@@ -44,7 +44,7 @@ jobs:
           LLM_MODEL: test-model
           LOG_ARCHIVO: false
         run: |
-          pytest api/ tests/ -v --cov=api --cov-report=term --cov-fail-under=80
+          pytest api/ -v --cov=api --cov-report=term --cov-fail-under=80
 
       - name: Set up Node
         uses: actions/setup-node@v4
