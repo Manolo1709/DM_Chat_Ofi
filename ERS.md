@@ -9,8 +9,8 @@
 | Curso y grupo | Pendiente |
 | Asignatura o módulo | Pendiente |
 | Docente | Pendiente |
-| Fecha | 15/10/2026 |
-| Versión | 0.1 |
+| Fecha | 02/11/2026 |
+| Versión | 0.2 |
 | Estado | Borrador |
 
 ### Historial de cambios
@@ -18,6 +18,7 @@
 | Versión | Fecha | Autor | Cambios realizados |
 |---|---|---|---|
 | 0.1 | 15/10/2026 | Daniel Mouimi, Manuel Palomares | Primera versión del documento. |
+| 0.2 | 02/11/2026 | Daniel Mouimi, Manuel Palomares | App 2: acceso con Clerk (RF-07 a RF-09), despliegue en contenedores en EC2 (RNF-05), proveedor Groq, la tasa la calcula siempre el servidor y la IA solo la explica. Trazabilidad con los nombres reales de las pruebas. |
 
 ## 1. Introducción
 
@@ -44,7 +45,9 @@ Esta ERS define qué debe hacer La Taberna y las condiciones que debe cumplir. L
 - Un registro de una o varias bebidas, con tipo, volumen, graduación y cantidad.
 - El cálculo de la tasa de alcohol en sangre, con un mínimo de 0,0 g/L.
 - La clasificación en un nivel de embriaguez y la estimación de las horas hasta 0,0 g/L.
-- Una explicación y unos consejos en lenguaje sencillo, generados por un modelo de lenguaje.
+- Una explicación y unos consejos en lenguaje sencillo, redactados por un modelo de lenguaje a partir de la tasa que calcula el servidor.
+- El acceso con una cuenta de Clerk (iniciar sesión o registrarse en una ventana modal) y un límite de cálculos por usuario.
+- El despliegue en contenedores en una instancia EC2 con HTTPS y dominio propio (https://lateberna.manoloplr.com).
 - Avisos de seguridad: no conducir tras beber, estimación orientativa y, con tasa alta, dejar de beber y pedir ayuda.
 
 **Queda fuera del alcance:**
@@ -52,8 +55,8 @@ Esta ERS define qué debe hacer La Taberna y las condiciones que debe cumplir. L
 - Medir el alcohol real con sensores o un alcoholímetro.
 - Determinar si una persona puede conducir o está dentro del límite legal.
 - Tener en cuenta medicación, enfermedades, tolerancia individual u otras sustancias.
-- Guardar historiales o cuentas de usuario.
-- Usar la IA para decidir el nivel o los avisos de seguridad: salen de reglas explícitas.
+- Guardar historiales o datos de los usuarios. Las cuentas las gestiona Clerk; el sistema solo recibe el identificador de la sesión.
+- Usar la IA para calcular la tasa o decidir el nivel o los avisos de seguridad: salen de la fórmula y de reglas explícitas.
 
 ### 1.4. Definiciones y abreviaturas
 
@@ -64,9 +67,12 @@ Esta ERS define qué debe hacer La Taberna y las condiciones que debe cumplir. L
 | Fórmula de Widmark | Método para estimar la TAS: gramos de alcohol / (peso en kg × coeficiente de distribución). |
 | Coeficiente de distribución | Reparto del alcohol en el cuerpo: aproximadamente 0,68 en hombres y 0,55 en mujeres. |
 | Nivel de embriaguez | Clasificación de la TAS: sobrio, alegre, borracho o peligroso. |
-| LLM / IA | Modelo de lenguaje que calcula la tasa y redacta la explicación y los consejos. |
+| LLM / IA | Modelo de lenguaje que redacta la explicación y los consejos a partir de la tasa ya calculada por el servidor. No hace cálculos. |
 | API | Interfaz del servidor a la que el frontend envía los datos y de la que recibe el resultado. |
-| Fórmula de respaldo | Cálculo propio del servidor que se usa cuando la IA no está disponible. |
+| Explicación de respaldo | Explicación genérica y consejos fijos por nivel que se usan cuando la IA no está disponible. La tasa es la misma. |
+| Clerk | Servicio externo de autenticación. Gestiona las cuentas y emite el token de sesión que el servidor verifica. |
+| EC2 | Servicio de máquinas virtuales de AWS donde se despliega la App 2. |
+| Caddy | Servidor web que hace de proxy con HTTPS automático (Let's Encrypt) delante del frontend. |
 
 ### 1.5. Referencias y fuentes
 
@@ -75,27 +81,30 @@ Esta ERS define qué debe hacer La Taberna y las condiciones que debe cumplir. L
 | FUE-01 | Descripción del proyecto (README: idea, datos, reglas y flujo de uso) | 15/10/2026 | `README.md` del repositorio |
 | FUE-02 | Plantilla de ERS de la asignatura | Pendiente | `plantillaERS.md` |
 | FUE-03 | Enunciado o requisitos del docente | Pendiente | Pendiente |
+| FUE-04 | Especificación de la App 2 (Spec Kit) | 02/11/2026 | `specs/001-taberna-app2/` |
 
 ## 2. Descripción general del sistema
 
 ### 2.1. Contexto y perspectiva del producto
 
-La Taberna es un sistema nuevo e independiente: una aplicación web que no amplía ningún sistema previo. Se compone de un frontend, que se ejecuta en el navegador del usuario, y de un backend, que expone una API. El backend se relaciona con un único sistema externo: el proveedor de modelos de lenguaje (por defecto, OpenRouter), al que consulta para calcular la tasa y redactar la explicación. Los diagramas están en el Anexo D.
+La Taberna es un sistema nuevo e independiente: una aplicación web que no amplía ningún sistema previo. Se compone de un frontend, que se ejecuta en el navegador del usuario, y de un backend, que expone una API. El backend se relaciona con dos sistemas externos: Clerk, que verifica la sesión del usuario, y el proveedor de modelos de lenguaje (Groq, con el modelo `qwen/qwen3.8-27b`, configurable), al que solo pide que redacte la explicación. La tasa la calcula siempre el servidor con la fórmula de Widmark. En producción, todo corre en contenedores en una instancia EC2 detrás de Caddy. Los diagramas están en el Anexo D.
 
 ```
-Usuario (navegador) --> Frontend (Vue) --> API (FastAPI) --> Proveedor de IA (OpenRouter)
-                                              |
-                                              +--> Fórmula de respaldo (si la IA falla)
+Usuario (navegador) --> Caddy (HTTPS) --> nginx + SPA (Vue) --> API (FastAPI) --> Groq (explicación)
+        |                                                          |
+        +--> Clerk (inicio de sesión)                              +--> Clerk (verifica el token)
+                                                                   +--> Widmark (tasa, siempre)
 ```
 
 ### 2.2. Personas interesadas y tipos de usuario
 
 | ID | Persona, colectivo o rol | Necesidad o responsabilidad | Permisos y conocimientos relevantes |
 |---|---|---|---|
-| ACT-01 | Usuario | Conocer cuánto alcohol puede tener en sangre y cuánto tardará en eliminarlo. | Acceso anónimo, sin cuenta. Puede introducir datos y ver el resultado. No requiere conocimientos técnicos. |
-| ACT-02 | Servicio de IA (sistema externo) | Calcular la tasa y redactar la explicación y los consejos. | Recibe solo valores validados y devuelve un JSON con una estructura fija. |
+| ACT-01 | Usuario | Conocer cuánto alcohol puede tener en sangre y cuánto tardará en eliminarlo. | Necesita una sesión de Clerk para calcular (10 cálculos por minuto y 50 al día). No requiere conocimientos técnicos. |
+| ACT-02 | Servicio de IA (sistema externo) | Redactar la explicación y los consejos de una tasa ya calculada. | Recibe solo valores validados y la tasa del servidor, y devuelve un JSON con una estructura fija. |
 | ACT-03 | Equipo de desarrollo | Mantener el sistema y configurar la clave y el modelo de IA. | Acceso al código y a las variables de entorno del servidor. |
 | ACT-04 | Docente | Evaluar que el proyecto cumple lo especificado. | Consulta esta ERS y el sistema. |
+| ACT-05 | Clerk (sistema externo) | Gestionar las cuentas y emitir y validar los tokens de sesión. | El servidor solo acepta tokens emitidos para el origen de la aplicación. |
 
 ### 2.3. Funciones principales
 
@@ -107,7 +116,8 @@ Los requisitos detallados se documentan en la sección 3.
 - Clasificar la tasa en un nivel de embriaguez.
 - Mostrar el resultado junto con una explicación y consejos.
 - Mostrar avisos de seguridad (no conducir, estimación orientativa y alerta con tasa alta).
-- Seguir funcionando con una fórmula propia cuando la IA no está disponible.
+- Seguir funcionando con una explicación genérica cuando la IA no está disponible.
+- Exigir una sesión de Clerk y limitar los cálculos por usuario.
 
 ### 2.4. Entorno de uso
 
@@ -124,10 +134,11 @@ Todas las restricciones actuales son decisiones del equipo. Si el docente impone
 | ID | Restricción | Origen o justificación |
 |---|---|---|
 | RES-01 | El frontend se desarrolla con Vue 3, TypeScript y Vite. | Decisión del equipo. |
-| RES-02 | El backend se desarrolla en Python con FastAPI y se despliega como función serverless (Vercel). | Decisión del equipo. |
-| RES-03 | La IA se consume mediante una API compatible con OpenAI, con un modelo gratuito por defecto, sujeto a los límites del proveedor. | Decisión del equipo: evitar costes. |
-| RES-04 | El sistema no almacena datos personales ni historiales, y no tiene cuentas de usuario. | Alcance de la primera versión (sección 1.3). |
+| RES-02 | El backend se desarrolla en Python con FastAPI. La App 1 se despliega como función serverless en Vercel y la App 2 en contenedores Docker en una instancia EC2 de AWS. | Decisión del equipo y requisito de la práctica de la App 2. |
+| RES-03 | La IA se consume mediante una API compatible con OpenAI. El proveedor es Groq (plan gratuito: 1000 peticiones al día y 8000 tokens por minuto con `qwen/qwen3.8-27b`); el proveedor y el modelo se cambian con variables de entorno. | Decisión del equipo: evitar costes. El modelo gratuito de OpenRouter que se usaba al principio dejó de estar disponible. |
+| RES-04 | El sistema no almacena datos personales ni historiales. Las cuentas existen solo en Clerk. | Alcance (sección 1.3). |
 | RES-05 | Fecha de entrega. | Pendiente de confirmar con el docente. |
+| RES-06 | Tailwind CSS: **No aplica**. La interfaz usa CSS propio (`src/style.css` y estilos de los componentes). | Tailwind no es obligatorio; el diseño de taberna ya estaba hecho con CSS propio y migrarlo no aporta nada a los requisitos. |
 
 ### 2.6. Suposiciones y dependencias
 
@@ -135,9 +146,10 @@ Todas las restricciones actuales son decisiones del equipo. Si el docente impone
 |---|---|---|---|
 | SUP-01 | Suposición | El usuario introduce datos veraces (peso, bebidas y tiempo). | La estimación no refleja su estado real. |
 | SUP-02 | Suposición | Los coeficientes de Widmark (0,68 y 0,55) y la eliminación de 0,15 g/L por hora son aceptables para una estimación orientativa. | El resultado puede desviarse en personas con características distintas a la media. |
-| DEP-01 | Dependencia | El proveedor de IA está disponible y la clave es válida. | Se usa la fórmula de respaldo y una explicación genérica. |
+| DEP-01 | Dependencia | El proveedor de IA está disponible y la clave es válida. | Se muestra la misma tasa con la explicación de respaldo. |
 | DEP-02 | Dependencia | La plataforma de alojamiento y la conexión a internet funcionan. | El sistema no es accesible. |
-| DEP-03 | Dependencia | El plan gratuito del proveedor de IA mantiene sus límites de uso. | Más respuestas con la fórmula de respaldo. |
+| DEP-03 | Dependencia | El plan gratuito del proveedor de IA mantiene sus límites de uso. | Más respuestas con la explicación de respaldo. |
+| DEP-04 | Dependencia | Clerk está disponible y sus claves son válidas. | Nadie puede iniciar sesión ni calcular. Si faltan las claves en el servidor, responde 500. |
 
 ## 3. Requisitos funcionales
 
@@ -155,6 +167,9 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 | RF-04 | Mostrar el resultado y los avisos de seguridad | Alta | FUE-01 | Propuesto |
 | RF-05 | Generar la explicación y los consejos, con respaldo si falla la IA | Alta | FUE-01 | Propuesto |
 | RF-06 | Informar de los errores y permitir reintentar | Media | FUE-01 | Propuesto |
+| RF-07 | Acceder con una cuenta de Clerk en una ventana modal | Alta | FUE-04 | Implementado |
+| RF-08 | Verificar el token de sesión en el servidor | Alta | FUE-04 | Implementado |
+| RF-09 | Limitar los cálculos por usuario | Alta | FUE-04 | Implementado |
 
 ### 3.2. Fichas de requisitos funcionales
 
@@ -214,12 +229,12 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 | Entradas | Datos de RF-01. |
 | Comportamiento esperado | Gramos de alcohol = suma de volumen × graduación/100 × 0,8 × cantidad. Se multiplican por el factor de estómago (vacío 1,0; algo 0,9; lleno 0,75). Pico = gramos / (peso × 0,68 en hombres o 0,55 en mujeres). Tasa = pico − 0,15 × horas, con un mínimo de 0. Nivel: menos de 0,2 sobrio; de 0,2 a menos de 0,8 alegre; de 0,8 a menos de 1,5 borracho; desde 1,5 peligroso. El nivel lo decide el sistema, no la IA. Horas hasta cero = tasa sin redondear / 0,15. La tasa y las horas se redondean a dos decimales. Ejemplo en el Anexo A y casos de prueba en el Anexo E. |
 | Salidas y postcondiciones | Una tasa mayor o igual que 0, un nivel y unas horas mayores o iguales que 0. |
-| Errores o alternativas | Si la IA calcula la tasa y falla, se aplica RF-05. |
-| Dependencias | RF-02, RF-05 |
+| Errores o alternativas | Ninguno: la tasa la calcula siempre el servidor, también cuando la IA falla (RF-05). |
+| Dependencias | RF-02 |
 
 **Criterios de aceptación:**
 
-- **CA-RF03-01:** Dado un hombre de 70 kg con el estómago vacío, 0 h bebiendo y 3 cañas (200 ml al 5 %), cuando se calcula con la fórmula de respaldo, entonces la tasa es 0,50 g/L, el nivel es alegre y faltan 3,36 h hasta 0,0 g/L.
+- **CA-RF03-01:** Dado un hombre de 70 kg con el estómago vacío, 0 h bebiendo y 3 cañas (200 ml al 5 %), cuando se calcula, entonces la tasa es 0,50 g/L, el nivel es alegre y faltan 3,36 h hasta 0,0 g/L.
 - **CA-RF03-02:** Dado un hombre de 70 kg con el estómago vacío, 2 h bebiendo y 1 caña (200 ml al 5 %), cuando se calcula, entonces la tasa es 0,00 g/L, el nivel es sobrio y las horas son 0.
 - **CA-RF03-03:** Dada una tasa de 1,49 g/L, cuando se clasifica, entonces el nivel es borracho. Con 1,50 g/L es peligroso, y con 0,19 g/L es sobrio.
 
@@ -249,14 +264,14 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 
 | Campo | Descripción |
 |---|---|
-| Enunciado | El sistema deberá pedir a un modelo de lenguaje la tasa, una explicación de 2 a 4 frases y de 2 a 4 consejos, enviándole solo valores numéricos y de listas cerradas, y deberá devolver igualmente un resultado completo, con la fórmula propia y consejos genéricos, cuando la IA no esté disponible o responda algo no válido. |
+| Enunciado | El sistema deberá pasar a un modelo de lenguaje la tasa ya calculada (RF-03), el nivel y las horas de espera, y pedirle una explicación de 4 a 5 frases y de 3 a 4 consejos, enviándole solo valores numéricos y de listas cerradas. Deberá devolver igualmente un resultado completo, con la misma tasa y una explicación y consejos genéricos, cuando la IA no esté disponible o responda algo no válido. |
 | Justificación | Ofrece una explicación personalizada sin que el fallo de un servicio externo deje al usuario sin resultado (OBJ-04). |
 | Actor | ACT-02 |
 | Prioridad | Alta |
 | Fuente | FUE-01 |
 | Precondiciones | Los datos han superado RF-02. |
 | Entradas | Datos validados de RF-01. |
-| Comportamiento esperado | Hace una sola llamada a la IA por solicitud válida y exige un JSON con tasa, explicación y consejos. Lo valida (tasa entre 0 y 6 g/L, explicación no vacía, de 1 a 6 consejos). Si no hay clave, hay un fallo de red o de HTTP, se agotan 30 s o la respuesta no es válida, usa la fórmula de RF-03, una explicación genérica y consejos propios del nivel. La respuesta indica en `origen` si viene de la IA («ia») o del respaldo («respaldo»). El motivo del fallo se anota en la consola del servidor y, en local, en `logs/errores.txt`, sin datos del usuario ni respuesta de la IA. |
+| Comportamiento esperado | Hace una sola llamada a la IA por solicitud válida y exige un JSON con la tasa copiada, la explicación y los consejos. Lo valida (tasa entre 0 y 6 g/L, explicación no vacía, de 1 a 6 consejos). La tasa que se muestra es siempre la del servidor, nunca la que devuelve la IA. Si no hay clave, hay un fallo de red o de HTTP, se agotan 30 s o la respuesta no es válida, usa una explicación genérica y consejos propios del nivel. La respuesta indica en `origen` si viene de la IA («ia») o del respaldo («respaldo»). El motivo del fallo se anota en la consola del servidor y, en local, en `logs/errores.txt`, sin datos del usuario ni respuesta de la IA. |
 | Salidas y postcondiciones | Explicación y consejos junto al resultado, con el mismo formato en los dos casos. |
 | Errores o alternativas | El usuario no ve ningún error por un fallo de la IA. Con nivel peligroso, los consejos genéricos incluyen dejar de beber y llamar al 112. |
 | Dependencias | RF-02, RF-03, DEP-01 |
@@ -278,7 +293,7 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 | Fuente | FUE-01 |
 | Precondiciones | La petición al servidor ha fallado. |
 | Entradas | Código de error o ausencia de conexión. |
-| Comportamiento esperado | Mensajes: 422, datos no válidos; 500, problema del servidor; 502, el servicio de explicación no responde; sin conexión, comprobar la red; otros códigos, error del servidor con su código. |
+| Comportamiento esperado | Mensajes: 401, «Debes iniciar sesión para calcular.»; 422, datos no válidos; 429, «Has hecho demasiados cálculos. Espera un poco y vuelve a intentarlo.»; 500, problema del servidor; 502, el servicio de explicación no responde; sin conexión, comprobar la red; otros códigos, error del servidor con su código. |
 | Salidas y postcondiciones | Se oculta el resultado anterior y se muestra el error. «Reintentar» repite el cálculo con los datos actuales. |
 | Errores o alternativas | Ninguna. |
 | Dependencias | RF-02 |
@@ -287,6 +302,69 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 
 - **CA-RF06-01:** Dado un servidor inalcanzable, cuando el usuario pide el cálculo, entonces aparece el mensaje de falta de conexión y el botón «Reintentar».
 - **CA-RF06-02:** Dado un error mostrado, cuando el usuario pulsa «Reintentar», entonces se repite el cálculo con los datos actuales del formulario.
+
+#### RF-07. Acceder con una cuenta de Clerk en una ventana modal
+
+| Campo | Descripción |
+|---|---|
+| Enunciado | El sistema deberá mostrar los botones «Entrar» y de registro mientras no haya sesión, abrir el inicio de sesión o el registro de Clerk en una ventana modal, sin cambiar de página, y mostrar el formulario de cálculo y el menú del usuario cuando haya sesión. |
+| Justificación | Solo los usuarios identificados consumen la IA (FUE-04). La aplicación es de una sola página, sin rutas. |
+| Actor | ACT-01, ACT-05 |
+| Prioridad | Alta |
+| Fuente | FUE-04 |
+| Precondiciones | La clave publicable de Clerk está configurada en el frontend. |
+| Entradas | Credenciales del usuario, que introduce en la ventana de Clerk. |
+| Comportamiento esperado | El frontend usa `SignInButton` y `SignUpButton` en modo modal y `UserButton` con sesión. Cada petición de cálculo lleva `Authorization: Bearer <token>`. |
+| Salidas y postcondiciones | El usuario tiene sesión y puede calcular. |
+| Errores o alternativas | Sin sesión no se envía la petición. |
+| Dependencias | RF-08, DEP-04 |
+
+**Criterios de aceptación:**
+
+- **CA-RF07-01:** Dado un usuario sin sesión, cuando abre la página, entonces ve los botones de acceso y no el formulario.
+- **CA-RF07-02:** Dado un usuario con sesión, cuando calcula, entonces la petición lleva la cabecera `Authorization: Bearer <token>`.
+
+#### RF-08. Verificar el token de sesión en el servidor
+
+| Campo | Descripción |
+|---|---|
+| Enunciado | El servidor deberá verificar con Clerk el token de cada petición de cálculo, aceptando solo tokens de sesión emitidos para el origen de la aplicación, y responder 401 sin llamar a la IA si falta el token o no es válido. |
+| Justificación | Impide que alguien use la API y consuma la IA sin cuenta. |
+| Actor | ACT-05 |
+| Prioridad | Alta |
+| Fuente | FUE-04 |
+| Precondiciones | `CLERK_SECRET_KEY` y `FRONTEND_ORIGIN` están configuradas en el servidor. |
+| Entradas | Cabecera `Authorization`. |
+| Comportamiento esperado | `verificar_usuario` usa `authenticate_request` con `authorized_parties` (los orígenes de `FRONTEND_ORIGIN` y `AWS_URL`) y `accepts_token=["session_token"]`. |
+| Salidas y postcondiciones | El identificador del usuario (`sub`) para aplicar RF-09. |
+| Errores o alternativas | Sin cabecera: 401 «Debes iniciar sesión». Token rechazado: 401 con el motivo. Si falta la configuración de Clerk en el servidor: 500, no 401. |
+| Dependencias | RF-07, RF-09 |
+
+**Criterios de aceptación:**
+
+- **CA-RF08-01:** Dada una petición sin cabecera `Authorization`, cuando llega al servidor, entonces responde 401 y no llama a Clerk ni a la IA.
+- **CA-RF08-02:** Dada una petición con un token que Clerk rechaza, cuando llega al servidor, entonces responde 401 y no llama a la IA.
+- **CA-RF08-03:** Dado un servidor sin `CLERK_SECRET_KEY` o sin `FRONTEND_ORIGIN`, cuando llega una petición, entonces responde 500.
+
+#### RF-09. Limitar los cálculos por usuario
+
+| Campo | Descripción |
+|---|---|
+| Enunciado | El servidor deberá permitir como máximo 10 cálculos por minuto y 50 al día a cada usuario, y responder 429 sin llamar a la IA cuando se superen. |
+| Justificación | Protege la cuota gratuita del proveedor de IA (RES-03). |
+| Actor | ACT-01 |
+| Prioridad | Alta |
+| Fuente | FUE-04 |
+| Precondiciones | El usuario tiene sesión (RF-08). |
+| Entradas | Identificador del usuario. |
+| Comportamiento esperado | `limitar_usuario` cuenta las peticiones en memoria por usuario: una ventana deslizante de 60 s y un contador por día (UTC). |
+| Salidas y postcondiciones | La petición continúa o se rechaza. |
+| Errores o alternativas | 429 «Demasiadas peticiones. Espera un minuto» o «Has alcanzado el límite diario». Los contadores se pierden al reiniciar el contenedor. |
+| Dependencias | RF-08 |
+
+**Criterios de aceptación:**
+
+- **CA-RF09-01:** Dado un usuario que hace 11 cálculos en un minuto, cuando envía el undécimo, entonces el servidor responde 429 y la IA se ha llamado solo 10 veces.
 
 ## 4. Requisitos no funcionales
 
@@ -297,7 +375,8 @@ Describen propiedades de calidad y condiciones de funcionamiento. Los umbrales n
 | RNF-01 | Seguridad y privacidad | La clave de la IA solo existirá en el servidor, el sistema no almacenará los datos del usuario y el registro de errores no contendrá datos del usuario ni respuestas de la IA. | Revisión del código y del repositorio, revisión del tráfico entre el navegador y el servidor, y prueba del registro con un fallo simulado. | La clave no aparece en el repositorio, en el código del frontend ni en las respuestas de la API. El sistema no guarda datos entre solicitudes. El registro solo contiene el motivo del fallo. | Alta |
 | RNF-02 | Fiabilidad y rendimiento | Un fallo del proveedor de IA no deberá impedir obtener el resultado. El sistema esperará como máximo 30 segundos a la IA antes de usar el respaldo, y con el respaldo responderá en un máximo de 1 segundo. | Simular falta de clave, error 401, 429 y 500, tiempo agotado y respuesta no válida. Medir 50 solicitudes válidas con el respaldo en local. | En todos los fallos el sistema devuelve un resultado completo y el usuario no ve un error. Al menos el 95 % de las 50 solicitudes con el respaldo tarda 1 s o menos. | Alta |
 | RNF-03 | Usabilidad, accesibilidad y compatibilidad | Todos los campos deberán tener etiqueta y ser utilizables con el teclado, el resultado y los errores deberán anunciarse a los lectores de pantalla, y la aplicación deberá funcionar en las versiones actuales de Chrome, Firefox, Edge y Safari y en pantallas de móvil. | Un usuario sin experiencia previa, en ordenador y en móvil (360 px de ancho), y un recorrido con el teclado y con un lector de pantalla. Versiones de los navegadores: Pendiente de acordar. | El usuario completa un cálculo sin ayuda en cada navegador, todos los campos tienen etiqueta, el resultado y las alertas se anuncian y no hay desplazamiento horizontal en móvil. | Media |
-| RNF-04 | Mantenibilidad y pruebas | La lógica de cálculo, la validación de entradas, la interpretación de la respuesta de la IA y el manejo de sus fallos deberán tener pruebas automáticas que no llamen a la IA real. | Ejecución de las pruebas del backend y del frontend en el entorno de desarrollo, con la IA simulada. | Todas las pruebas automáticas pasan y ninguna consume créditos de IA. | Media |
+| RNF-04 | Mantenibilidad y pruebas | La lógica de cálculo, la validación de entradas, la interpretación de la respuesta de la IA, el manejo de sus fallos y la autenticación deberán tener pruebas automáticas que no llamen a la IA ni a Clerk reales. | Ejecución de las pruebas del backend y del frontend en local y en GitHub Actions, con la IA y Clerk simulados. | Todas las pruebas automáticas pasan, la cobertura del backend es al menos del 80 % y ninguna consume créditos de IA. | Media |
+| RNF-05 | Despliegue y seguridad de la infraestructura | La App 2 deberá desplegarse en contenedores (backend, frontend y proxy) en una instancia EC2 con HTTPS, publicando solo los puertos 80 y 443, con el backend solo en la red interna de Docker y el SSH abierto solo para la IP de administración. | Revisión de `docker-compose*.yml`, de `aws/terraform/main.tf` y del grupo de seguridad, y apertura de la URL de producción. | https://lateberna.manoloplr.com abre con candado, `GET /api/health` responde `{"status": "ok"}`, el backend no es accesible desde fuera y el puerto 22 solo admite la IP de administración. | Alta |
 
 ## 5. Datos y reglas de negocio
 
@@ -311,7 +390,8 @@ El sistema no guarda ningún dato entre solicitudes (RES-04). Los datos existen 
 | DAT-02 | Bebida | Tipo (cerveza, vino, licor, cóctel u otro), volumen (ml, entero), graduación (% vol., decimal), cantidad (entero). | Volumen de 1 a 2000. Graduación de 0 a 100. Cantidad de 1 a 50. Todos obligatorios. | El usuario las introduce. No se conservan. |
 | DAT-03 | Solicitud de cálculo | Los campos de DAT-01 y una lista de DAT-02. | Entre 1 y 50 bebidas. | Viaja del navegador al servidor. No se conserva. |
 | DAT-04 | Resultado | Tasa (g/L, mayor o igual que 0), nivel, horas hasta cero (mayor o igual que 0), explicación, lista de consejos, aviso de conducción y origen (ia o respaldo). | La tasa y las horas se redondean a dos decimales. | Se muestra al usuario. No se conserva. |
-| DAT-05 | Respuesta de la IA | Tasa, explicación (1 a 2000 caracteres) y consejos (1 a 6). | La tasa debe estar entre 0 y 6 g/L. Si no cumple el formato, se descarta. | Solo se usa para construir DAT-04. No se conserva. |
+| DAT-05 | Respuesta de la IA | Tasa (copia de la del servidor), explicación (1 a 2000 caracteres) y consejos (1 a 6). | La tasa debe estar entre 0 y 6 g/L. Si no cumple el formato, se descarta. | Solo se usan la explicación y los consejos para construir DAT-04. No se conserva. |
+| DAT-06 | Contadores de peticiones | Identificador de Clerk del usuario, marcas de tiempo del último minuto y número de peticiones del día. | Ninguna. | En memoria del backend. Se pierden al reiniciar. |
 
 ### 5.2. Reglas de negocio
 
@@ -328,6 +408,8 @@ El sistema no guarda ningún dato entre solicitudes (RES-04). Los datos existen 
 | RN-09 | Una solicitud necesita al menos una bebida. | RF-01, RF-02 | FUE-01 |
 | RN-10 | Una tasa de la IA superior a 6 g/L se considera un error y se descarta. | RF-05 | Decisión del equipo |
 | RN-11 | A la IA solo se le envían números y valores de listas cerradas, nunca texto libre del usuario. | RF-05 | Decisión del equipo |
+| RN-12 | La tasa la calcula siempre el servidor con la fórmula de Widmark; la de la IA nunca se muestra. | RF-03, RF-05 | Decisión del equipo: con la IA calculando, la misma entrada daba tasas distintas (0,14, 0,30 y 0,37 g/L). |
+| RN-13 | Cada usuario puede hacer como máximo 10 cálculos por minuto y 50 al día. | RF-09 | FUE-04 |
 
 ## 6. Interfaces externas
 
@@ -338,6 +420,7 @@ La interfaz es una sola página con la estética de una taberna. Está dividida 
 | ID | Pantalla o interacción | Usuarios | Información y acciones necesarias | Requisitos relacionados |
 |---|---|---|---|---|
 | IU-01 | Cabecera | ACT-01 | Rótulo «La Taberna», lema y el cartel «Si bebes, no conduzcas». | RF-04 |
+| IU-09 | Acceso | ACT-01 | Sin sesión, botones «Entrar» y de registro que abren Clerk en una ventana modal. Con sesión, el menú del usuario. | RF-07 |
 | IU-02 | Formulario de la persona | ACT-01 | Peso, selección de sexo, horas bebiendo y selección de estómago. | RF-01, RF-02, RNF-03 |
 | IU-03 | Lista de bebidas | ACT-01 | Por cada bebida: tipo, volumen, graduación, contador de cantidad y botón de quitar. Botón para añadir otra. | RF-01, RF-02, RNF-03 |
 | IU-04 | Botón «Ponme la cuenta» | ACT-01 | Envía el formulario. Durante el cálculo se desactiva y muestra «Sirviendo…». | RF-04 |
@@ -352,8 +435,9 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 
 | ID | Sistema o dispositivo externo | Información intercambiada | Dirección y momento del intercambio | Formato o protocolo exigido | Respuesta ante fallos |
 |---|---|---|---|---|---|
-| INT-01 | Proveedor de IA (por defecto, OpenRouter) | Envía los datos validados en un prompt. Recibe la tasa, la explicación y los consejos. | Ambas, en cada cálculo válido. | HTTPS, `POST /chat/completions` compatible con OpenAI, autenticación con clave en cabecera y respuesta en JSON. Tiempo máximo de 30 s. | Se aplica RF-05 (fórmula de respaldo). |
-| INT-02 | Frontend y API propia | Envía la solicitud de cálculo (DAT-03) y recibe el resultado (DAT-04). | Ambas, al pulsar «Ponme la cuenta». | HTTPS, `POST /api/calcular` con JSON. También existe `GET /api/health`, que devuelve `{"status": "ok"}`. | Códigos 422, 500 y 502, o falta de conexión, según RF-06. |
+| INT-01 | Proveedor de IA (Groq, `https://api.groq.com/openai/v1`) | Envía los datos validados y la tasa calculada en un prompt. Recibe la explicación y los consejos. | Ambas, en cada cálculo válido. | HTTPS, `POST /chat/completions` compatible con OpenAI, autenticación con clave en cabecera y respuesta en JSON. Tiempo máximo de 30 s. | Se aplica RF-05 (explicación de respaldo). |
+| INT-03 | Clerk | El frontend obtiene el token de sesión. El backend lo verifica. | En el inicio de sesión y en cada cálculo. | SDK `@clerk/vue` en el frontend y `clerk-backend-api` en el servidor. | 401 si el token no es válido. 500 si falta la configuración. |
+| INT-02 | Frontend y API propia | Envía la solicitud de cálculo (DAT-03) y recibe el resultado (DAT-04). | Ambas, al pulsar «Ponme la cuenta». | HTTPS, `POST /api/calcular` con JSON. También existe `GET /api/health`, que devuelve `{"status": "ok"}`. | Códigos 401, 422, 429, 500 y 502, o falta de conexión, según RF-06. |
 
 ## 7. Casos de uso o escenarios de usuario
 
@@ -363,7 +447,7 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 |---|---|
 | Objetivo | Saber cuánto alcohol puede tener en sangre y cuánto tardará en bajar. |
 | Actor principal | ACT-01 |
-| Precondiciones | La aplicación está abierta y hay conexión con el servidor. |
+| Precondiciones | La aplicación está abierta, hay conexión con el servidor y el usuario ha iniciado sesión (RF-07). |
 | Evento de inicio | El usuario abre la página. |
 | Requisitos relacionados | RF-01 a RF-05, RN-01 a RN-09, RNF-02 |
 
@@ -373,14 +457,14 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 2. El usuario elige el tipo de cada bebida, ajusta los datos y la cantidad y, si hace falta, añade más.
 3. El usuario pulsa «Ponme la cuenta».
 4. El sistema valida los datos y desactiva el botón.
-5. El sistema pide el cálculo y la explicación a la IA, y clasifica el nivel con sus reglas.
+5. El sistema comprueba la sesión y el límite de cálculos, calcula la tasa con la fórmula de Widmark, clasifica el nivel con sus reglas y pide la explicación a la IA.
 6. El sistema muestra la tasa, el nivel, el tiempo hasta cero, la explicación, los consejos y los avisos de seguridad.
 7. El usuario puede cambiar los datos y volver a calcular.
 
 **Flujos alternativos y excepciones:**
 
 - **A1 — Datos no válidos:** en el paso 4, si algún valor está fuera de rango, el formulario no se envía y el usuario corrige el dato. El flujo continúa en el paso 3.
-- **A2 — IA no disponible:** en el paso 5, si la IA falla, el sistema usa la fórmula de respaldo (CU-02). El flujo continúa en el paso 6.
+- **A2 — IA no disponible:** en el paso 5, si la IA falla, el sistema usa la explicación de respaldo (CU-02). El flujo continúa en el paso 6.
 - **A3 — Error del servidor:** en el paso 5, si el servidor no responde o devuelve un error, el sistema muestra el mensaje y el botón «Reintentar». Si el usuario reintenta, el flujo vuelve al paso 4.
 
 **Postcondiciones:** si se completa, el resultado queda visible y no se guarda nada. Si falla, se muestra el error y el usuario conserva los datos del formulario.
@@ -397,9 +481,9 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 
 **Flujo principal:**
 
-1. El sistema intenta obtener la tasa y la explicación de la IA.
-2. El sistema detecta el fallo y lo registra en el log del servidor.
-3. El sistema calcula la tasa con la fórmula de Widmark y clasifica el nivel.
+1. El sistema calcula la tasa con la fórmula de Widmark y clasifica el nivel.
+2. El sistema intenta obtener la explicación de la IA.
+3. El sistema detecta el fallo y lo registra en el log del servidor.
 4. El sistema responde con una explicación genérica y los consejos propios del nivel.
 5. El usuario ve el resultado y los avisos de seguridad, sin mensaje de error.
 
@@ -438,16 +522,20 @@ Los métodos «Automática» se ejecutan con las pruebas del proyecto y los «Ma
 
 | Requisito | Objetivo o necesidad de origen | Criterio de aceptación | ID de prueba | Método y datos de comprobación | Resultado esperado |
 |---|---|---|---|---|---|
-| RF-01 | OBJ-01, FUE-01 | CA-RF01-01, CA-RF01-02, CA-RF01-03 | PR-01 | Automática en el frontend (`tests/persona.spec.ts` y `tests/bebidas.spec.ts`) y revisión manual del formulario: cambiar peso a 80 kg y sexo a mujer, añadir una bebida y quitar la única bebida. | Los valores se conservan. Con la primera hay dos bebidas. La última no se puede quitar. |
-| RF-02 | OBJ-01, FUE-01 | CA-RF02-01, CA-RF02-02 | PR-02 | Automática en la API (`api/test_contrato.py`) con la IA simulada: pesos de 30, 250, 29 y 251 kg, 0, 50 y 51 bebidas, campos ausentes, texto vacío y cuerpo que no es JSON. | Los límites se aceptan con una sola llamada a la IA. El resto da 422 y no llama a la IA. |
-| RF-03 | OBJ-01, OBJ-02, FUE-01 | CA-RF03-01, CA-RF03-02, CA-RF03-03 | PR-03 | Automática (`api/test_calculo.py`) con los casos E-01 a E-07 del Anexo E y con las tasas 0,19, 0,20, 1,49 y 1,50. | Las tasas, niveles y horas coinciden con el Anexo E. |
+| RF-01 | OBJ-01, FUE-01 | CA-RF01-01, CA-RF01-02, CA-RF01-03 | PR-01 | Automática en el frontend (`tests/persona.spec.ts`: «actualiza el modelo al cambiar los datos»; `tests/bebidas.spec.ts`: «añade una bebida», «no deja quitar la última bebida») y revisión manual del formulario: cambiar peso a 80 kg y sexo a mujer, añadir una bebida y quitar la única bebida. | Los valores se conservan. Con la primera hay dos bebidas. La última no se puede quitar. |
+| RF-02 | OBJ-01, FUE-01 | CA-RF02-01, CA-RF02-02 | PR-02 | Automática en la API (`api/test_contrato.py`: `test_en_el_limite_se_acepta`, `test_fuera_del_limite_da_422_sin_llamar_a_la_ia`, `test_campo_ausente_da_422`, `test_texto_vacio_o_solo_espacios_da_422`, `test_cuerpo_vacio_o_no_json_da_422`) con la IA simulada: pesos de 30, 250, 29 y 251 kg, 0, 50 y 51 bebidas, campos ausentes, texto vacío y cuerpo que no es JSON. | Los límites se aceptan con una sola llamada a la IA. El resto da 422 y no llama a la IA. |
+| RF-03 | OBJ-01, OBJ-02, FUE-01 | CA-RF03-01, CA-RF03-02, CA-RF03-03 | PR-03 | Automática (`api/test_calculo.py`: `test_widmark_resultado_conocido`, `test_tasa_nunca_negativa`, `test_clasificar_nivel`, `test_horas_hasta_cero`) con los casos E-01 a E-07 del Anexo E y con las tasas 0,19, 0,20, 1,49 y 1,50. | Las tasas, niveles y horas coinciden con el Anexo E. |
 | RF-04 | OBJ-02, OBJ-03, FUE-01 | CA-RF04-01, CA-RF04-02, CA-RF04-03 | PR-04 | Manual con las capturas del Anexo C: caso alegre, caso peligroso y observación del botón durante un cálculo. | Se ven la tasa, el nivel, los dos avisos y, solo con peligroso, la alerta del 112. El botón muestra «Sirviendo…». |
-| RF-05 | OBJ-04, FUE-01 | CA-RF05-01, CA-RF05-02, CA-RF05-03 | PR-05 | Automática (`api/test_ia.py` y `api/test_contrato.py`) con la IA simulada: respuesta válida, timeout, error 401, 429 y 500, sin clave, respuesta sin JSON y tasa de 12. | Con la válida, `origen` es «ia». En los fallos, `origen` es «respaldo», el resultado está completo y el registro no lleva datos del usuario. |
-| RF-06 | OBJ-04, FUE-01 | CA-RF06-01, CA-RF06-02 | PR-06 | Manual: apagar el servidor, calcular y pulsar «Reintentar». | Mensaje de falta de conexión y repetición del cálculo. |
+| RF-05 | OBJ-04, FUE-01 | CA-RF05-01, CA-RF05-02, CA-RF05-03 | PR-05 | Automática (`api/test_ia.py`: `test_calcular_con_ia`, `test_calcular_si_la_ia_falla_usa_fallback`, `test_fallo_de_la_ia_se_anota_sin_datos_del_usuario`; `api/test_contrato.py`: `test_entrada_valida_hace_una_sola_llamada_a_la_ia`, `test_fallo_de_la_ia_usa_el_respaldo`, `test_sin_clave_no_se_llama_a_la_ia`) con la IA simulada: respuesta válida, timeout, error 401, 429 y 500, sin clave, respuesta sin JSON y tasa de 12. | Con la válida, `origen` es «ia». En los fallos, `origen` es «respaldo», el resultado está completo y el registro no lleva datos del usuario. |
+| RF-06 | OBJ-04, FUE-01 | CA-RF06-01, CA-RF06-02 | PR-06 | Automática (`tests/bebidas.spec.ts`: «muestra la tarjeta de error para %i» con 401, 422, 429, 500 y 502, y «muestra error de red y reintenta»). Manual: apagar el servidor, calcular y pulsar «Reintentar». | Mensaje de cada código, de falta de conexión y repetición del cálculo. |
+| RF-07 | FUE-04 | CA-RF07-01, CA-RF07-02 | PR-11 | Automática (`tests/bebidas.spec.ts`: «envía persona y bebidas y pinta el resultado», que comprueba la cabecera `Authorization`). Manual: abrir la página sin sesión e iniciar sesión en la ventana modal. | Sin sesión solo se ven los botones de acceso. Con sesión, la petición lleva el token. |
+| RF-08 | FUE-04 | CA-RF08-01, CA-RF08-02, CA-RF08-03 | PR-12 | Automática (`api/test_auth.py`: `test_token_ausente_devuelve_401_sin_verificar_clerk`, `test_token_invalido_devuelve_401`, `test_token_valido_permite_acceso_y_acepta_origen_aws`, `test_configuracion_clerk_incompleta_devuelve_500`). Manual: `curl -X POST https://lateberna.manoloplr.com/api/calcular` sin token. | 401 sin llamar a la IA; 500 sin configuración; 200 con token válido. |
+| RF-09 | FUE-04 | CA-RF09-01 | PR-13 | Automática (`api/test_auth.py`: `test_undecima_peticion_en_un_minuto_devuelve_429`). | Las 10 primeras dan 200, la undécima 429 y la IA se llama 10 veces. |
 | RNF-01 | OBJ-04 | Sección 4 | PR-07 | Inspección: buscar la clave en el repositorio, en el código del frontend y en las respuestas. Automática: prueba del registro con un fallo simulado. | Sin coincidencias. El registro solo tiene el motivo. |
 | RNF-02 | OBJ-04 | Sección 4 | PR-08 | Automática: fallos simulados de la IA. Medida de 50 solicitudes con el respaldo en local. | Resultado completo en todos los fallos. El 95 % responde en 1 s o menos. |
 | RNF-03 | OBJ-02 | Sección 4 | PR-09 | Manual: usuario sin experiencia en ordenador y móvil, recorrido con teclado y cálculo en Chrome, Firefox, Edge y Safari. | Cálculo sin ayuda, campos con etiqueta y sin desplazamiento horizontal. |
-| RNF-04 | OBJ-01 | Sección 4 | PR-10 | Automática: ejecutar las pruebas del backend (`pytest`) y del frontend (`npm test`). | Todas pasan, sin llamar a la IA real. |
+| RNF-04 | OBJ-01 | Sección 4 | PR-10 | Automática: ejecutar las pruebas del backend (`pytest api/ --cov=api`) y del frontend (`npm test` y `npm run typecheck`), en local y en GitHub Actions (`.github/workflows/ci-cd.yml`). | Todas pasan, sin llamar a la IA ni a Clerk reales, con cobertura de al menos el 80 %. |
+| RNF-05 | FUE-04 | Sección 4 | PR-14 | Inspección de `docker-compose.yml`, `docker-compose.aws.yml` y `aws/terraform/main.tf`. Manual: abrir https://lateberna.manoloplr.com y `GET /api/health`. | HTTPS válido, health `{"status": "ok"}`, solo 80 y 443 publicados y SSH restringido. |
 
 ## 9. Cuestiones pendientes
 
@@ -458,7 +546,7 @@ Los métodos «Automática» se ejecutan con las pruebas del proyecto y los «Ma
 | PEN-03 | Confirmar los umbrales propuestos, como 1 s y el 95 % de 50 solicitudes. | RNF-02 | Equipo y docente | Pendiente | Pendiente |
 | PEN-04 | Versiones de navegadores y volumen de usuarios esperado. | RNF-03, sección 2.4 | Equipo | Pendiente | Pendiente |
 | PEN-05 | Fecha de entrega. | RES-05 | Docente | Pendiente | Pendiente |
-| PEN-06 | Tolerancia admitida entre la tasa que calcula la IA y la de la fórmula. Hoy se acepta cualquiera hasta 6 g/L. | RF-03, RF-05, RN-10 | Equipo | Pendiente | Pendiente |
+| PEN-06 | Tolerancia admitida entre la tasa que calcula la IA y la de la fórmula. | RF-03, RF-05, RN-10 | Equipo | 02/11/2026 | Resuelta: la tasa la calcula siempre el servidor (RN-12); la IA solo la explica. |
 | PEN-07 | El README sitúa el aviso de ayuda urgente con el resultado, y en la aplicación está en el panel de la explicación. Decidir cuál es lo correcto y actualizar el documento que corresponda. | RF-04 | Equipo | Pendiente | Pendiente |
 | PEN-08 | Comprobar si el formulario limita a 50 bebidas, como hace el servidor. Si no, añadir el límite o un mensaje claro. | RF-01, RF-02 | Daniel Mouimi | Pendiente | Pendiente |
 
@@ -483,7 +571,7 @@ Los métodos «Automática» se ejecutan con las pruebas del proyecto y los «Ma
 
 | Revisor y rol | Versión revisada | Fecha | Resultado | Observaciones |
 |---|---|---|---|---|
-| Pendiente | 0.1 | Pendiente | Pendiente | Sin revisión todavía. |
+| Pendiente | 0.2 | Pendiente | Pendiente | Sin revisión todavía. |
 
 ## Anexos
 
@@ -554,12 +642,15 @@ Capturas de la aplicación en cuatro situaciones. Son orientativas: el diseño f
 
 ```mermaid
 flowchart LR
-    U[Usuario] --> F["Frontend (Vue 3 + TypeScript)"]
-    F -->|"POST /api/calcular"| A["API (FastAPI en Vercel)"]
-    A -->|"Datos validados"| IA["Proveedor de IA (OpenRouter)"]
-    IA -->|"Tasa, explicación y consejos"| A
-    A -.->|"Si la IA falla"| R["Fórmula de respaldo (Widmark)"]
-    R -.-> A
+    U[Usuario] -->|HTTPS| P["Caddy (proxy HTTPS)"]
+    P --> F["nginx + SPA (Vue 3 + TypeScript)"]
+    U -.->|"Inicio de sesión (modal)"| C["Clerk"]
+    F -->|"POST /api/calcular + token"| A["API (FastAPI)"]
+    A -->|"Verifica el token"| C
+    A --> W["Fórmula de Widmark (tasa y nivel)"]
+    A -->|"Datos y tasa calculada"| IA["Groq (qwen/qwen3.8-27b)"]
+    IA -->|"Explicación y consejos"| A
+    A -.->|"Si la IA falla"| R["Explicación de respaldo"]
     A -->|"Resultado"| F
 ```
 
@@ -572,22 +663,23 @@ sequenceDiagram
     participant A as API
     participant IA as Proveedor de IA
     U->>F: Rellena el formulario y pulsa «Ponme la cuenta»
-    F->>A: POST /api/calcular
+    F->>A: POST /api/calcular con Authorization: Bearer <token>
     A->>A: Valida los datos (422 si no son válidos)
-    A->>IA: Pide la tasa, la explicación y los consejos
+    A->>A: Verifica el token con Clerk (401) y el límite del usuario (429)
+    A->>A: Calcula la tasa con Widmark y clasifica el nivel
+    A->>IA: Pide la explicación y los consejos de esa tasa
     alt La IA responde con una salida válida
-        IA-->>A: JSON con tasa, explicación y consejos
+        IA-->>A: JSON con explicación y consejos
     else La IA falla, no hay clave o la salida no es válida
-        A->>A: Calcula con la fórmula de respaldo
+        A->>A: Usa la explicación de respaldo
     end
-    A->>A: Clasifica el nivel con los umbrales fijos
     A-->>F: Resultado (tasa, nivel, horas hasta cero, consejos y aviso)
     F-->>U: Muestra el resultado y los avisos
 ```
 
 ### Anexo E. Casos de prueba de cálculo
 
-Resultados calculados con la fórmula de Widmark de la sección 5.2, que es la misma que usa la fórmula de respaldo. El tiempo hasta cero se obtiene dividiendo la tasa sin redondear entre 0,15 y se redondea después. Por eso, a partir de la tasa ya redondeada (RF-03) pueden salir centésimas distintas. Se usan en la prueba PR-03 (RF-03).
+Resultados calculados con la fórmula de Widmark de la sección 5.2, que es la que usa el servidor. El tiempo hasta cero se obtiene dividiendo la tasa sin redondear entre 0,15 y se redondea después. Por eso, a partir de la tasa ya redondeada (RF-03) pueden salir centésimas distintas. Se usan en la prueba PR-03 (RF-03).
 
 | Caso | Persona | Bebidas | Horas | Gramos tras el estómago | Tasa (g/L) | Nivel | Horas hasta 0,0 |
 |---|---|---|---|---|---|---|---|

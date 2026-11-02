@@ -1,74 +1,125 @@
-# Calculadora de nivel de alcohol en sangre
+# La Taberna: calculadora de alcohol en sangre
 
-## Idea
+Aplicación web que estima cuánto alcohol tiene una persona en sangre a partir de lo que ha bebido, su peso, su sexo biológico, el tiempo que lleva bebiendo y cómo tiene el estómago. Devuelve la tasa (g/L), un nivel en lenguaje sencillo (sobrio, alegre, borracho o peligroso), las horas hasta volver a 0,0 g/L y una explicación con consejos redactada por una IA.
 
-Aplicación web que estima cómo de borracho va una persona. El usuario indica qué bebidas ha ingerido, su peso corporal, su sexo biológico, el tiempo transcurrido desde que empezó a beber y cómo de lleno tiene el estómago. La aplicación calcula una tasa de alcohol en sangre aproximada y la traduce a un nivel comprensible.
+**Producción:** https://lateberna.manoloplr.com
 
-## Objetivo de la primera versión
+El resultado es solo orientativo: no sustituye a un alcoholímetro y nunca indica que se pueda conducir.
 
-Permitir que una persona registre lo que ha bebido y obtenga una estimación sencilla de su tasa de alcohol en sangre (TAS) y de cuánto tardará en bajar. El resultado es solo orientativo: la aplicación no puede garantizar que una persona esté en condiciones de conducir ni sustituye a un alcoholímetro.
+## Cómo funciona
 
-## Datos del formulario
+- **La tasa la calcula siempre el servidor** con la fórmula de Widmark (`api/calculo.py`). El nivel y los avisos salen de reglas fijas.
+- **La IA solo explica.** Recibe la tasa ya calculada, el nivel y las horas de espera, y devuelve en JSON una explicación y entre 3 y 4 consejos. Antes la IA también calculaba la tasa, pero con los mismos datos daba números distintos en cada llamada.
+- **Si la IA falla** (sin clave, error HTTP, más de 30 s o JSON no válido), la respuesta lleva la misma tasa con una explicación genérica y `origen: "respaldo"`.
+- **Hace falta sesión.** El acceso es con Clerk en una ventana modal. El backend verifica el token en cada cálculo y limita a cada usuario a 10 cálculos por minuto y 50 al día.
 
-Para cada bebida:
+```mermaid
+flowchart LR
+    U[Usuario] -->|HTTPS| P["Caddy (HTTPS, Let's Encrypt)"]
+    P --> N["nginx + SPA Vue 3"]
+    U -.->|"Inicio de sesión (modal)"| C[Clerk]
+    N -->|"/api/calcular + token"| A[FastAPI]
+    A -->|"Verifica el token"| C
+    A --> W["Widmark: tasa y nivel"]
+    A -->|"Datos y tasa"| G["Groq (qwen/qwen3.8-27b)"]
+    G -->|"Explicación y consejos"| A
+```
 
-- Tipo de bebida, por ejemplo cerveza, vino, licor o cóctel.
-- Volumen en ml o número de unidades (caña, copa, chupito).
-- Graduación alcohólica (% vol.), con un valor por defecto según el tipo de bebida.
-- Cantidad.
+| Parte | Tecnología |
+|---|---|
+| Frontend | Vue 3, TypeScript, Vite, `@clerk/vue`, CSS propio (sin Tailwind) |
+| Backend | Python 3.12, FastAPI, Pydantic v2, httpx, `clerk-backend-api` |
+| IA | Groq, con una API compatible con OpenAI. Modelo `qwen/qwen3.8-27b`, configurable |
+| Contenedores | Docker Compose: `backend`, `frontend` (nginx) y `proxy` (Caddy, solo en EC2) |
+| Infraestructura | AWS EC2 `t3.micro` con IP elástica, creada con Terraform (`aws/terraform/`) |
+| CI | GitHub Actions (`.github/workflows/ci-cd.yml`): pruebas y typecheck |
 
-Datos de la persona:
+## Variables de entorno
 
-- Peso corporal en kg.
-- Sexo biológico (hombre o mujer), porque cambia el reparto del alcohol en el cuerpo.
-- Tiempo transcurrido desde la primera bebida.
-- Nivel de llenado del estómago: vacío, algo de comida o lleno.
+Copia `.env.example` a `.env` y rellena los valores. `.env` nunca se sube a Git.
 
-## Resultado esperado
+| Variable | Para qué sirve |
+|---|---|
+| `LLM_API_KEY` | Clave del proveedor de IA (Groq: `gsk_...`) |
+| `LLM_BASE_URL` | `https://api.groq.com/openai/v1` |
+| `LLM_MODEL` | `qwen/qwen3.8-27b` |
+| `LLM_REASONING_EFFORT` | Opcional, para modelos con razonamiento |
+| `CLERK_SECRET_KEY` | Clave secreta de Clerk (solo el servidor) |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clave publicable de Clerk (frontend) |
+| `FRONTEND_ORIGIN` | Origen desde el que se abre la web; Clerk solo acepta tokens emitidos para él |
+| `DOMINIO` | Solo en EC2: dominio para el certificado HTTPS |
+| `LOG_ARCHIVO`, `LOG_LEVEL`, `APP_ENV` | Registro de errores |
 
-La aplicación muestra:
+Con el plan gratuito de Groq, el modelo admite 1000 peticiones al día y 8000 tokens por minuto. Cada cálculo tarda alrededor de 0,5 a 1 s.
 
-- La tasa de alcohol en sangre estimada (g/L).
-- Un nivel de embriaguez en lenguaje sencillo: sobrio, algo alegre, borracho o peligroso.
-- Una estimación del tiempo que tardará en volver a 0,0 g/L.
-- Un aviso de que no se debe conducir si se ha bebido, con independencia del resultado.
-- Una advertencia destacada cuando la tasa estimada sea alta, con recomendación de dejar de beber y pedir ayuda si hay síntomas graves.
+## Ejecutar en local
 
-## Reglas iniciales
+```powershell
+python -m venv .venv; .venv\Scripts\activate
+pip install -r requirements-dev.txt
+uvicorn api.index:app --reload        # API en http://localhost:8000
 
-1. Calcular los gramos de alcohol de cada bebida a partir del volumen, la graduación y la densidad del alcohol (0,8 g/ml).
-2. Estimar la tasa con la fórmula de Widmark: gramos de alcohol / (peso en kg × coeficiente de distribución), con un coeficiente aproximado de 0,68 para hombres y 0,55 para mujeres.
-3. Restar la eliminación por el paso del tiempo, con una tasa media aproximada de 0,15 g/L por hora.
-4. Ajustar la absorción según el estómago: más lenta y con un pico menor si hay comida, más rápida si está vacío.
-5. Nunca mostrar una tasa negativa; el mínimo es 0,0 g/L.
-6. Presentar siempre el resultado como una estimación aproximada, nunca como un valor exacto.
+npm install
+npm run dev                           # SPA en http://localhost:5173
+```
 
-## Flujo de uso
+Con `VITE_USE_MOCK=true` el frontend usa una respuesta de ejemplo y no necesita el backend.
 
-1. El usuario introduce sus datos personales: peso, sexo biológico y estómago.
-2. Añade las bebidas que ha tomado y el tiempo transcurrido.
-3. La aplicación valida que haya peso, sexo y al menos una bebida.
-4. La lógica calcula la tasa estimada y el nivel de embriaguez.
-5. Se muestra el resultado con su explicación y los avisos de seguridad.
-6. El usuario puede volver al formulario y modificar los datos.
+## Pruebas
 
-## Fuera del alcance inicial
+```powershell
+pytest api/                           # backend: cálculo, contrato, IA y Clerk simulados
+npm test                              # frontend (Vitest)
+npm run typecheck
+```
 
-- Medir el alcohol real mediante sensores o un alcoholímetro.
-- Determinar si una persona puede conducir o está dentro del límite legal.
-- Tener en cuenta medicación, enfermedades, tolerancia individual o el consumo de otras sustancias.
-- Guardar historiales o cuentas de usuario.
-- Usar inteligencia artificial para tomar decisiones de seguridad. La IA calcula la tasa siguiendo la fórmula de Widmark, pero el nivel y los avisos salen de reglas explícitas, y si la IA falla se usa la fórmula.
+Ninguna prueba llama a la IA ni a Clerk reales. GitHub Actions lanza las tres en cada push a `main` y exige al menos un 80 % de cobertura en el backend.
 
-## Criterio de éxito
+## Docker Compose (local)
 
-Con distintas combinaciones de bebidas, peso, sexo, tiempo y estómago, la página devuelve una tasa estimada coherente, explica el nivel de embriaguez y deja claro que es una aproximación y que no se debe conducir tras beber.
+```powershell
+docker compose up -d --build          # http://localhost:8080
+docker compose logs -f backend
+docker compose down
+```
+
+El backend solo está en la red interna de Docker. nginx sirve la SPA y reenvía `/api` al backend.
+
+## Despliegue en EC2
+
+La guía completa está en [`aws/EC2.md`](aws/EC2.md): Terraform crea la instancia, la IP elástica (52.21.114.192) y el grupo de seguridad, que solo abre los puertos 80 y 443 y el 22 para la IP de administración. La instancia clona este repositorio y se arranca con:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d --build
+```
+
+Para actualizarla: `git pull` y el mismo comando.
+
+## Spec Kit
+
+La App 2 se ha especificado con Spec Kit:
+
+- [`.specify/memory/constitution.md`](.specify/memory/constitution.md): principios del proyecto.
+- [`specs/001-taberna-app2/`](specs/001-taberna-app2/): especificación, plan, modelo de datos, contrato OpenAPI, tareas y guía rápida.
+- [`ERS.md`](ERS.md): especificación de requisitos (versión 0.2), con la trazabilidad de cada requisito a sus pruebas.
+- [`docs/COMPARATIVA.md`](docs/COMPARATIVA.md): comparativa entre la App 1 (manual) y la App 2 (Spec Kit + IA).
+
+## Seguridad
+
+- Las claves solo existen en el `.env` del servidor. Ni el frontend ni las respuestas de la API las contienen, y `.env`, `*.pem`, `*.tfstate` y `*.tfvars` están en `.gitignore`.
+- A la IA solo se le envían números y valores de listas cerradas, nunca texto libre del usuario.
+- Sin token, o con un token no válido, el servidor responde 401 sin llamar a la IA. Si falta la configuración de Clerk, responde 500.
+- Límite por usuario: 10 cálculos por minuto y 50 al día (429). Los contadores están en memoria.
+- No se guarda ningún dato del usuario entre peticiones.
 
 ## Registro de errores
 
-Si la IA falla, la API responde igualmente con la fórmula de Widmark (`origen: "respaldo"`) y anota el motivo:
+Si la IA falla, la API responde igualmente y anota el motivo:
 
-- **Consola:** el mensaje sale en la terminal donde se ejecuta uvicorn (y en la pestaña Logs de Vercel).
-- **Archivo:** en local, los avisos y errores se guardan en `logs/errores.txt` (ignorado por Git). En Vercel no se escribe archivo porque el sistema es de solo lectura.
+- **Consola:** en la terminal de uvicorn o en `docker compose logs backend`.
+- **Archivo:** en local, los avisos y errores se guardan en `logs/errores.txt` (ignorado por Git). `LOG_ARCHIVO=false` lo desactiva.
 - Solo se registra el motivo (por ejemplo «El modelo no respondió a tiempo»), nunca los datos del usuario, la clave ni la respuesta de la IA.
-- `LOG_ARCHIVO=false` desactiva el archivo (lo usan las pruebas).
+
+## Autores
+
+Daniel Mouimi y Manuel Palomares.

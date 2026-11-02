@@ -124,9 +124,9 @@ description: "Lista de tareas de La Taberna (App 2)"
 
 ## Fase 8: Cierre
 
-- [ ] T044 [P] Añadir al `ERS.md` los requisitos de Clerk (FR-007 a FR-009) y despliegue (NFR-005) con su trazabilidad a pruebas
-- [ ] T045 [P] Documento de comparativa App 1 vs App 2 (tiempo, calidad, mantenibilidad, utilidad de la IA, esfuerzo de Clerk e infraestructura aparte)
-- [ ] T046 Actualizar `README.md`: la IA ya no calcula la tasa, solo la explica
+- [X] T044 [P] Añadir al `ERS.md` los requisitos de Clerk (FR-007 a FR-009) y despliegue (NFR-005) con su trazabilidad a pruebas
+- [X] T045 [P] Documento de comparativa App 1 vs App 2 (tiempo, calidad, mantenibilidad, utilidad de la IA, esfuerzo de Clerk e infraestructura aparte)
+- [X] T046 Actualizar `README.md`: la IA ya no calcula la tasa, solo la explica
 - [ ] T047 Ejecutar `quickstart.md` de principio a fin antes de la demo
 - [ ] T048 `terraform destroy` después de la evaluación
 
