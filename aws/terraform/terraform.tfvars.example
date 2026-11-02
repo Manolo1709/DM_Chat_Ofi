@@ -1,0 +1,5 @@
+# Copiar a terraform.tfvars y cambiar lo que haga falta (todo es opcional)
+# region         = "us-east-1"
+# tipo_instancia = "t3.micro"
+# disco_gb       = 16
+# ssh_cidr       = "203.0.113.10/32"

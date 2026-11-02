@@ -1,0 +1,8 @@
+# Estado y claves de Terraform: nunca a Git (el estado contiene la clave SSH privada)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+taberna.pem
+crash.log
