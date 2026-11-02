@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from api import ia
 from api.index import app
-from api.calculo import calcular_tasa
+from api.calculo import calcular_tasa, clasificar_nivel, horas_hasta_cero
 from api import registro
 from api.schemas import CalculoRequest
 
@@ -150,10 +150,11 @@ def test_calcular_con_ia():
     assert res.status_code == 200
     cuerpo = res.json()
     assert cuerpo["explicacion"] == SALIDA_OK["explicacion"]
-    # La tasa, el nivel y las horas salen de lo que calcula la IA
-    assert cuerpo["tasa_gl"] == 0.42
-    assert cuerpo["nivel"] == "alegre"
-    assert cuerpo["horas_hasta_cero"] == 2.8
+    # La tasa sale siempre de la fórmula; la IA solo aporta el texto
+    tasa = calcular_tasa(CalculoRequest.model_validate(PETICION))
+    assert cuerpo["tasa_gl"] == round(tasa, 2)
+    assert cuerpo["nivel"] == clasificar_nivel(tasa).value
+    assert cuerpo["horas_hasta_cero"] == round(horas_hasta_cero(tasa), 2)
     assert cuerpo["origen"] == "ia"
     assert "No conduzcas" in cuerpo["aviso_conduccion"]
 

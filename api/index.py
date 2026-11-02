@@ -1,5 +1,6 @@
-"""API FastAPI: punto de entrada local (uvicorn) y función serverless de Vercel."""
+"""API FastAPI: punto de entrada local (uvicorn), Docker y función serverless de Vercel."""
 
+import os
 import sys
 from pathlib import Path
 
@@ -8,6 +9,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from dotenv import load_dotenv  # noqa: E402
 from fastapi import FastAPI  # noqa: E402
+from fastapi.responses import FileResponse  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
 
 from api import ia  # noqa: E402
 from api.registro import logger  # noqa: E402
@@ -39,6 +42,33 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 AVISO_CONDUCCION = "No conduzcas si has bebido alcohol, aunque la estimación sea baja."
 
 app = FastAPI(title="Calculadora de alcohol en sangre")
+
+# ---------------------------------------------------------------------
+# Servir archivos estáticos del frontend (build de Vite en /app/static)
+# Solo en entorno Docker/producción (no en Vercel serverless)
+# ---------------------------------------------------------------------
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+if STATIC_DIR.exists() and not os.getenv("VERCEL"):
+    # Montar assets (JS, CSS, imágenes) con cache largo
+    app.mount(
+        "/assets",
+        StaticFiles(directory=STATIC_DIR / "assets"),
+        name="assets",
+    )
+
+    # Servir index.html en raíz y rutas SPA (catch-all)
+    @app.get("/")
+    async def root():
+        return FileResponse(STATIC_DIR / "index.html")
+
+    @app.get("/{full_path:path}")
+    async def spa_fallback(full_path: str):
+        # No interceptar rutas de API
+        if full_path.startswith("api/"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="API endpoint not found")
+        # Devolver index.html para rutas del frontend (Vue Router history mode)
+        return FileResponse(STATIC_DIR / "index.html")
 
 
 def verificar_usuario(request: Request) -> str:
@@ -151,18 +181,17 @@ def calcular(
     usuario_id: Annotated[str, Depends(verificar_usuario)],) -> CalculoResponse:
     limitar_usuario(usuario_id)
 
-    # La IA calcula la tasa; si falla, se usa la fórmula con una explicación genérica
+    # La tasa sale siempre de la fórmula (la IA se equivocaba en las cuentas);
+    # la IA solo la explica. Si falla, se usa una explicación genérica
+    tasa = calcular_tasa(datos)
+    nivel = clasificar_nivel(tasa)
     try:
         texto = ia.calcular_con_ia(datos)
-        tasa = texto.tasa_gl
-        nivel = clasificar_nivel(tasa)
         origen = OrigenEnum.ia
     except ia.IAError as e:
         # Solo se anota el motivo, nunca los datos del usuario ni la respuesta de la IA
         causa = type(e.__cause__).__name__ if e.__cause__ else "sin causa"
-        logger.warning("IA no disponible, se usa la fórmula: %s [%s]", e, causa)
-        tasa = calcular_tasa(datos)
-        nivel = clasificar_nivel(tasa)
+        logger.warning("IA no disponible, se usa la explicación genérica: %s [%s]", e, causa)
         texto = ia.explicacion_generica(nivel)
         origen = OrigenEnum.respaldo
 

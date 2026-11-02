@@ -16,6 +16,9 @@ def simular_clerk(monkeypatch, request):
     monkeypatch.setenv("CLERK_SECRET_KEY", "sk_test_pruebas")
     monkeypatch.setenv("FRONTEND_ORIGIN", "http://localhost:5173")
     monkeypatch.delenv("AWS_URL", raising=False)
+    # Cada prueba empieza sin peticiones contadas, o el límite por usuario devuelve 429
+    index.peticiones_minuto.clear()
+    index.peticiones_dia.clear()
     monkeypatch.setattr(
         index,
         "authenticate_request",
