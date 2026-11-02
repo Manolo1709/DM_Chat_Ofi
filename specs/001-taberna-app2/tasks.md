@@ -81,7 +81,7 @@ description: "Lista de tareas de La Taberna (App 2)"
 - [X] T023 [US2] Enviar `Authorization: Bearer <token>` desde `src/services/api.ts`
 - [X] T024 [US2] `verificar_usuario` con `authenticate_request` y `authorized_parties` en `api/index.py`
 - [X] T025 [US2] `limitar_usuario` (10/min, 50/día) en `api/index.py`
-- [ ] T026 [US2] Eliminar `src/views/sign-in.vue`, `src/views/sign-up.vue` y la dependencia `vue-router` (principio I: sin rutas)
+- [X] T026 [US2] Eliminar `src/views/sign-in.vue`, `src/views/sign-up.vue` y la dependencia `vue-router` (principio I: sin rutas)
 - [X] T027 [US2] Responder 500, no 401, si faltan `CLERK_SECRET_KEY` o `FRONTEND_ORIGIN` en el servidor
 
 ---
@@ -104,7 +104,7 @@ description: "Lista de tareas de La Taberna (App 2)"
 - [X] T031 [P] [US4] 422 sin llamar a la IA en `api/test_contrato.py`
 - [X] T032 [P] [US4] Error de red y reintento en `tests/bebidas.spec.ts`
 - [X] T033 [US4] `ErrorCard.vue` y mensajes en `src/services/api.ts`
-- [ ] T034 [US4] Mensajes propios para 401 ("Inicia sesión") y 429 ("Espera un minuto") en `src/services/api.ts`
+- [X] T034 [US4] Mensajes propios para 401 ("Inicia sesión") y 429 ("Espera un minuto") en `src/services/api.ts`
 
 ---
 

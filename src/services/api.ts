@@ -26,9 +26,9 @@ export class ApiError extends Error {
 }
 
 const MENSAJES: Record<number, string> = {
-  401: 'Debes iniciar sesión para hacer un cálculo.',
+  401: 'Debes iniciar sesión para calcular.',
   422: 'Hay datos que no son válidos. Revisa el formulario.',
-  429: 'Has alcanzado el límite de peticiones. Espera un poco e inténtalo de nuevo.',
+  429: 'Has hecho demasiados cálculos. Espera un poco y vuelve a intentarlo.',
   500: 'El servidor ha tenido un problema. Inténtalo de nuevo.',
   502: 'El servicio de explicación no responde. Inténtalo de nuevo.',
 }

@@ -103,9 +103,9 @@ describe('App con fetch mockeado', () => {
   })
 
   it.each([
-    [401, 'iniciar sesión'],
+    [401, 'iniciar sesión para calcular'],
     [422, 'no son válidos'],
-    [429, 'límite de peticiones'],
+    [429, 'demasiados cálculos'],
     [500, 'problema'],
     [502, 'explicación no responde'],
   ])('muestra la tarjeta de error para %i', async (status, texto) => {
