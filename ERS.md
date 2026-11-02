@@ -149,253 +149,125 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 
 | ID | Nombre | Prioridad | Fuente | Estado |
 |---|---|---|---|---|
-| RF-01 | Registrar los datos de la persona | Alta | FUE-01 | Propuesto |
-| RF-02 | Registrar las bebidas | Alta | FUE-01 | Propuesto |
-| RF-03 | Validar los datos de entrada | Alta | FUE-01 | Propuesto |
-| RF-04 | Calcular la tasa de alcohol en sangre | Alta | FUE-01 | Propuesto |
-| RF-05 | Clasificar el nivel de embriaguez | Alta | FUE-01 | Propuesto |
-| RF-06 | Estimar el tiempo hasta 0,0 g/L | Alta | FUE-01 | Propuesto |
-| RF-07 | Mostrar el resultado | Alta | FUE-01 | Propuesto |
-| RF-08 | Mostrar los avisos de conducción y de estimación | Alta | FUE-01 | Propuesto |
-| RF-09 | Mostrar una alerta con tasa peligrosa | Alta | FUE-01 | Propuesto |
-| RF-10 | Generar explicación y consejos con IA | Media | FUE-01 | Propuesto |
-| RF-11 | Responder sin IA mediante la fórmula de respaldo | Alta | FUE-01 | Propuesto |
-| RF-12 | Informar de los errores y permitir reintentar | Media | FUE-01 | Propuesto |
+| RF-01 | Registrar los datos de la persona y las bebidas | Alta | FUE-01 | Propuesto |
+| RF-02 | Validar los datos de entrada | Alta | FUE-01 | Propuesto |
+| RF-03 | Calcular la tasa, el nivel y el tiempo hasta 0,0 g/L | Alta | FUE-01 | Propuesto |
+| RF-04 | Mostrar el resultado y los avisos de seguridad | Alta | FUE-01 | Propuesto |
+| RF-05 | Generar la explicación y los consejos, con respaldo si falla la IA | Alta | FUE-01 | Propuesto |
+| RF-06 | Informar de los errores y permitir reintentar | Media | FUE-01 | Propuesto |
 
 ### 3.2. Fichas de requisitos funcionales
 
-#### RF-01. Registrar los datos de la persona
+#### RF-01. Registrar los datos de la persona y las bebidas
 
 | Campo | Descripción |
 |---|---|
-| Enunciado | El sistema deberá permitir que el usuario indique su peso, su sexo biológico, las horas que lleva bebiendo y el estado de su estómago. |
-| Justificación | Estos datos determinan cómo se reparte y se elimina el alcohol. |
-| Actor | ACT-01 |
-| Prioridad | Alta |
-| Fuente | FUE-01 |
-| Precondiciones | Ninguna. |
-| Entradas | Peso (30 a 250 kg), sexo (hombre o mujer), horas bebiendo (0 a 24, en pasos de 0,25) y estómago (vacío, algo o lleno). |
-| Comportamiento esperado | El sistema muestra los cuatro campos con valores iniciales (70 kg, hombre, 1 h, algo de comida) y refleja los cambios del usuario. |
-| Salidas y postcondiciones | Los datos quedan listos para enviarse al calcular. |
-| Errores o alternativas | Si un valor está fuera de rango, se aplica RF-03. |
-| Dependencias | RF-03 |
-
-**Criterios de aceptación:**
-
-- **CA-RF01-01:** Dado el formulario abierto, cuando el usuario cambia el peso a 80 kg y el sexo a mujer, entonces el formulario conserva esos valores hasta enviarse.
-- **CA-RF01-02:** Dado el formulario abierto, cuando el usuario introduce 20 kg de peso, entonces el sistema no permite enviar el formulario.
-
-#### RF-02. Registrar las bebidas
-
-| Campo | Descripción |
-|---|---|
-| Enunciado | El sistema deberá permitir que el usuario añada, modifique y quite bebidas, indicando para cada una su tipo, volumen, graduación y cantidad. |
-| Justificación | Los gramos de alcohol se calculan a partir de cada bebida. |
+| Enunciado | El sistema deberá permitir que el usuario indique su peso, su sexo biológico, las horas que lleva bebiendo y el estado de su estómago, y que añada, modifique y quite las bebidas tomadas, con su tipo, volumen, graduación y cantidad. |
+| Justificación | Estos datos determinan los gramos de alcohol y cómo se reparte y se elimina. |
 | Actor | ACT-01 |
 | Prioridad | Alta |
 | Fuente | FUE-01 |
 | Precondiciones | Ninguna. La lista siempre contiene al menos una bebida. |
-| Entradas | Tipo (cerveza, vino, licor, cóctel u otro), volumen (1 a 2000 ml), graduación (0 a 100 %) y cantidad (1 a 50). |
-| Comportamiento esperado | Al elegir un tipo, el sistema carga su volumen y graduación habituales (caña de 200 ml al 5 %, copa de vino de 150 ml al 13 %, chupito de 40 ml al 40 %, cubata de 250 ml al 12 %, otra de 100 ml al 10 %) y conserva la cantidad. El usuario puede cambiarlos. |
-| Salidas y postcondiciones | La lista de bebidas queda lista para enviarse. |
-| Errores o alternativas | No se puede quitar la última bebida. La cantidad no baja de 1 ni sube de 50. |
-| Dependencias | RF-03 |
+| Entradas | Persona: peso (30 a 250 kg), sexo (hombre o mujer), horas bebiendo (0 a 24, en pasos de 0,25) y estómago (vacío, algo o lleno). Bebida: tipo (cerveza, vino, licor, cóctel u otro), volumen (1 a 2000 ml), graduación (0 a 100 %) y cantidad (1 a 50). |
+| Comportamiento esperado | El formulario muestra valores iniciales (70 kg, hombre, 1 h, algo de comida y una cerveza). Al elegir un tipo de bebida, el sistema carga su volumen y graduación habituales (caña de 200 ml al 5 %, copa de vino de 150 ml al 13 %, chupito de 40 ml al 40 %, cubata de 250 ml al 12 %, otra de 100 ml al 10 %) y conserva la cantidad. El usuario puede cambiarlos. |
+| Salidas y postcondiciones | Los datos quedan listos para enviarse al calcular. |
+| Errores o alternativas | No se puede quitar la última bebida. La cantidad no baja de 1 ni sube de 50. Si un valor está fuera de rango, se aplica RF-02. |
+| Dependencias | RF-02 |
 
 **Criterios de aceptación:**
 
-- **CA-RF02-01:** Dado un usuario con una cerveza en la lista, cuando pulsa «añadir», entonces la lista tiene dos bebidas.
-- **CA-RF02-02:** Dado un usuario con una sola bebida en la lista, cuando intenta quitarla, entonces la bebida permanece en la lista.
+- **CA-RF01-01:** Dado el formulario abierto, cuando el usuario cambia el peso a 80 kg y el sexo a mujer, entonces el formulario conserva esos valores hasta enviarse.
+- **CA-RF01-02:** Dado un usuario con una cerveza en la lista, cuando añade otra bebida, entonces la lista tiene dos bebidas.
+- **CA-RF01-03:** Dado un usuario con una sola bebida en la lista, cuando intenta quitarla, entonces la bebida permanece en la lista.
 
-#### RF-03. Validar los datos de entrada
+#### RF-02. Validar los datos de entrada
 
 | Campo | Descripción |
 |---|---|
-| Enunciado | El sistema deberá rechazar una solicitud de cálculo cuyos datos no cumplan los rangos definidos o que no incluya al menos una bebida. |
+| Enunciado | El sistema deberá rechazar una solicitud de cálculo que no incluya todos los campos, cuyos valores no cumplan los rangos definidos o que no tenga entre 1 y 50 bebidas, sin llamar a la IA. |
 | Justificación | Evita resultados absurdos y protege el servidor y el servicio de IA. |
 | Actor | ACT-01 |
 | Prioridad | Alta |
 | Fuente | FUE-01 |
 | Precondiciones | El usuario ha intentado calcular. |
-| Entradas | Los datos de RF-01 y RF-02, con 1 a 50 bebidas. |
-| Comportamiento esperado | Los rangos se comprueban en el formulario y también en el servidor, con los mismos límites. |
-| Salidas y postcondiciones | Si los datos son válidos, se calcula. Si no, no se calcula y se informa del error. |
-| Errores o alternativas | El servidor responde con un error de validación (código 422) y el frontend muestra el mensaje según RF-12. |
-| Dependencias | RF-01, RF-02, RF-12 |
+| Entradas | Los datos de RF-01. |
+| Comportamiento esperado | Los rangos se comprueban en el formulario y también en el servidor, con los mismos límites. Los valores en el límite (por ejemplo, 30 kg o 250 kg) se aceptan. Un campo ausente, un texto vacío o formado solo por espacios, o un cuerpo que no sea JSON se rechazan. |
+| Salidas y postcondiciones | Si los datos son válidos, se calcula. Si no, no se calcula y no se llama a la IA. |
+| Errores o alternativas | El servidor responde con un error de validación (código 422) y el frontend muestra el mensaje según RF-06. |
+| Dependencias | RF-01, RF-06 |
 
 **Criterios de aceptación:**
 
-- **CA-RF03-01:** Dada una solicitud con peso de 70 kg y una cerveza de 200 ml al 5 %, cuando se envía, entonces el sistema la acepta y calcula.
-- **CA-RF03-02:** Dada una solicitud sin bebidas, o con un peso de 20 kg, cuando se envía al servidor, entonces el servidor la rechaza con un error 422 y no calcula.
+- **CA-RF02-01:** Dada una solicitud con un peso de 30 kg o de 250 kg, cuando se envía, entonces el servidor la acepta y llama una sola vez a la IA.
+- **CA-RF02-02:** Dada una solicitud con un peso de 29 kg o de 251 kg, sin bebidas, con 51 bebidas, con un campo ausente o con el sexo vacío, cuando se envía, entonces el servidor responde con un error 422 y no llama a la IA.
 
-#### RF-04. Calcular la tasa de alcohol en sangre
+#### RF-03. Calcular la tasa, el nivel y el tiempo hasta 0,0 g/L
 
 | Campo | Descripción |
 |---|---|
-| Enunciado | El sistema deberá calcular la tasa de alcohol en sangre en g/L a partir de las bebidas, el peso, el sexo, el tiempo y el estómago, con la fórmula de Widmark, y nunca devolver un valor negativo. |
-| Justificación | Es el objetivo principal del sistema (OBJ-01). |
+| Enunciado | El sistema deberá calcular la tasa de alcohol en sangre en g/L con la fórmula de Widmark, asignarle un nivel de embriaguez según umbrales fijos y estimar las horas hasta volver a 0,0 g/L, sin devolver nunca una tasa negativa. |
+| Justificación | Es el objetivo principal del sistema (OBJ-01 y OBJ-02). |
 | Actor | ACT-01 |
 | Prioridad | Alta |
 | Fuente | FUE-01 |
-| Precondiciones | Los datos han superado RF-03. |
-| Entradas | Datos de RF-01 y RF-02. |
-| Comportamiento esperado | Gramos de alcohol = suma de volumen × graduación/100 × 0,8 × cantidad. Se multiplican por el factor de estómago (vacío 1,0; algo 0,9; lleno 0,75). Pico = gramos / (peso × 0,68 en hombres o 0,55 en mujeres). Tasa = pico − 0,15 × horas, con un mínimo de 0. El resultado se redondea a dos decimales. Ejemplo en el Anexo A y casos de prueba en el Anexo E. |
-| Salidas y postcondiciones | Una tasa en g/L mayor o igual que 0. |
-| Errores o alternativas | Si la IA falla, se aplica RF-11. |
-| Dependencias | RF-03, RF-10, RF-11 |
+| Precondiciones | Los datos han superado RF-02. |
+| Entradas | Datos de RF-01. |
+| Comportamiento esperado | Gramos de alcohol = suma de volumen × graduación/100 × 0,8 × cantidad. Se multiplican por el factor de estómago (vacío 1,0; algo 0,9; lleno 0,75). Pico = gramos / (peso × 0,68 en hombres o 0,55 en mujeres). Tasa = pico − 0,15 × horas, con un mínimo de 0. Nivel: menos de 0,2 sobrio; de 0,2 a menos de 0,8 alegre; de 0,8 a menos de 1,5 borracho; desde 1,5 peligroso. El nivel lo decide el sistema, no la IA. Horas hasta cero = tasa sin redondear / 0,15. La tasa y las horas se redondean a dos decimales. Ejemplo en el Anexo A y casos de prueba en el Anexo E. |
+| Salidas y postcondiciones | Una tasa mayor o igual que 0, un nivel y unas horas mayores o iguales que 0. |
+| Errores o alternativas | Si la IA calcula la tasa y falla, se aplica RF-05. |
+| Dependencias | RF-02, RF-05 |
 
 **Criterios de aceptación:**
 
-- **CA-RF04-01:** Dado un hombre de 70 kg con el estómago vacío, 0 h bebiendo y 3 cañas (200 ml al 5 %), cuando se calcula con la fórmula de respaldo, entonces la tasa es 0,50 g/L.
-- **CA-RF04-02:** Dado un hombre de 70 kg con el estómago vacío, 2 h bebiendo y 1 caña (200 ml al 5 %), cuando se calcula, entonces la tasa es 0,00 g/L y no es negativa.
+- **CA-RF03-01:** Dado un hombre de 70 kg con el estómago vacío, 0 h bebiendo y 3 cañas (200 ml al 5 %), cuando se calcula con la fórmula de respaldo, entonces la tasa es 0,50 g/L, el nivel es alegre y faltan 3,36 h hasta 0,0 g/L.
+- **CA-RF03-02:** Dado un hombre de 70 kg con el estómago vacío, 2 h bebiendo y 1 caña (200 ml al 5 %), cuando se calcula, entonces la tasa es 0,00 g/L, el nivel es sobrio y las horas son 0.
+- **CA-RF03-03:** Dada una tasa de 1,49 g/L, cuando se clasifica, entonces el nivel es borracho. Con 1,50 g/L es peligroso, y con 0,19 g/L es sobrio.
 
-#### RF-05. Clasificar el nivel de embriaguez
-
-| Campo | Descripción |
-|---|---|
-| Enunciado | El sistema deberá asignar a la tasa un nivel de embriaguez según umbrales fijos, y no según lo que indique la IA. |
-| Justificación | El nivel y los avisos de seguridad deben salir de reglas explícitas (OBJ-02). |
-| Actor | ACT-01 |
-| Prioridad | Alta |
-| Fuente | FUE-01 |
-| Precondiciones | Existe una tasa calculada. |
-| Entradas | Tasa en g/L. |
-| Comportamiento esperado | Menos de 0,2: sobrio. De 0,2 a menos de 0,8: alegre. De 0,8 a menos de 1,5: borracho. Desde 1,5: peligroso. |
-| Salidas y postcondiciones | Un nivel de los cuatro posibles. |
-| Errores o alternativas | Ninguna. |
-| Dependencias | RF-04 |
-
-**Criterios de aceptación:**
-
-- **CA-RF05-01:** Dada una tasa de 0,19 g/L, cuando se clasifica, entonces el nivel es sobrio. Con 0,20 g/L es alegre.
-- **CA-RF05-02:** Dada una tasa de 1,49 g/L, cuando se clasifica, entonces el nivel es borracho. Con 1,50 g/L es peligroso.
-
-#### RF-06. Estimar el tiempo hasta 0,0 g/L
+#### RF-04. Mostrar el resultado y los avisos de seguridad
 
 | Campo | Descripción |
 |---|---|
-| Enunciado | El sistema deberá estimar las horas que faltan para que la tasa vuelva a 0,0 g/L, dividiendo la tasa entre 0,15 g/L por hora. |
-| Justificación | Responde a la pregunta del usuario sobre cuánto tardará en bajar (OBJ-02). |
-| Actor | ACT-01 |
-| Prioridad | Alta |
-| Fuente | FUE-01 |
-| Precondiciones | Existe una tasa calculada. |
-| Entradas | Tasa en g/L. |
-| Comportamiento esperado | Horas = tasa / 0,15, redondeado a dos decimales. Se muestra en horas y minutos. Con tasa 0 se indica que ya está a 0,0 g/L. |
-| Salidas y postcondiciones | Un tiempo en horas mayor o igual que 0. |
-| Errores o alternativas | Ninguna. |
-| Dependencias | RF-04 |
-
-**Criterios de aceptación:**
-
-- **CA-RF06-01:** Dada una tasa de 0,50 g/L, cuando se estima el tiempo, entonces el resultado es 3,33 h (3 h 20 min).
-- **CA-RF06-02:** Dada una tasa de 0,00 g/L, cuando se muestra el resultado, entonces aparece «Ya estás a 0,0 g/L».
-
-#### RF-07. Mostrar el resultado
-
-| Campo | Descripción |
-|---|---|
-| Enunciado | El sistema deberá mostrar la tasa en g/L, el nivel de embriaguez y el tiempo hasta 0,0 g/L, con una barra que indique la tasa. |
-| Justificación | El usuario debe entender el resultado de un vistazo. |
+| Enunciado | El sistema deberá mostrar la tasa en g/L, el nivel, una barra de la tasa y el tiempo hasta 0,0 g/L, y acompañarlos siempre del aviso de que no se debe conducir tras beber y de la nota «Estimación orientativa. No sustituye a un alcoholímetro.». Con nivel peligroso, deberá mostrar además una alerta que recomiende dejar de beber y llamar al 112 si hay vómitos, confusión o somnolencia intensa. |
+| Justificación | El usuario debe entender el resultado de un vistazo y no usarlo para decidir si puede conducir (OBJ-02 y OBJ-03). |
 | Actor | ACT-01 |
 | Prioridad | Alta |
 | Fuente | FUE-01 |
 | Precondiciones | El cálculo ha terminado con éxito. |
 | Entradas | Respuesta del servidor. |
-| Comportamiento esperado | Muestra la tasa con dos decimales, el nivel (sobrio, contento, borracho o peligroso) resaltado entre los cuatro posibles y el tiempo hasta cero. Mientras se calcula, el botón queda desactivado y muestra «Sirviendo…». |
+| Comportamiento esperado | Muestra la tasa con dos decimales, el nivel (sobrio, contento, borracho o peligroso) resaltado entre los cuatro posibles y el tiempo en horas y minutos, o «Ya estás a 0,0 g/L». Los dos avisos aparecen siempre. La alerta solo aparece con nivel peligroso y se anuncia a los lectores de pantalla. Mientras se calcula, el botón queda desactivado y muestra «Sirviendo…», para evitar envíos duplicados. |
 | Salidas y postcondiciones | El resultado queda visible. El usuario puede modificar los datos y volver a calcular. |
 | Errores o alternativas | Si no hay resultado, se muestra un panel con la invitación a rellenar los datos. |
-| Dependencias | RF-04, RF-05, RF-06 |
+| Dependencias | RF-03 |
 
 **Criterios de aceptación:**
 
-- **CA-RF07-01:** Dada una respuesta con tasa 0,62 y nivel alegre, cuando se muestra, entonces aparece «0.62 g/L» y el nivel «Contento» resaltado.
-- **CA-RF07-02:** Dado un cálculo en curso, cuando el usuario mira el botón, entonces está desactivado y muestra «Sirviendo…».
+- **CA-RF04-01:** Dada una respuesta con tasa 0,62 y nivel alegre, cuando se muestra, entonces aparece «0.62 g/L», el nivel «Contento» resaltado, el aviso de conducción y la nota de estimación orientativa, y no aparece la alerta.
+- **CA-RF04-02:** Dada una respuesta con nivel peligroso, cuando se muestra, entonces aparece la alerta con la mención al 112, además de los dos avisos.
+- **CA-RF04-03:** Dado un cálculo en curso, cuando el usuario mira el botón, entonces está desactivado y muestra «Sirviendo…».
 
-#### RF-08. Mostrar los avisos de conducción y de estimación
-
-| Campo | Descripción |
-|---|---|
-| Enunciado | El sistema deberá mostrar con cada resultado un aviso de que no se debe conducir si se ha bebido y la nota «Estimación orientativa. No sustituye a un alcoholímetro.» |
-| Justificación | Evita que se use el resultado para decidir si se puede conducir (OBJ-03). |
-| Actor | ACT-01 |
-| Prioridad | Alta |
-| Fuente | FUE-01 |
-| Precondiciones | Hay un resultado visible. |
-| Entradas | Ninguna. |
-| Comportamiento esperado | Los dos avisos aparecen siempre, con independencia de la tasa. |
-| Salidas y postcondiciones | Ambos avisos visibles en el 100 % de los resultados. |
-| Errores o alternativas | Si falla la IA, los avisos se muestran igualmente. |
-| Dependencias | RF-07 |
-
-**Criterios de aceptación:**
-
-- **CA-RF08-01:** Dado un resultado con nivel sobrio, cuando se muestra, entonces aparecen el aviso de conducción y la nota de estimación orientativa.
-- **CA-RF08-02:** Dado un resultado con la IA caída, cuando se muestra, entonces ambos avisos siguen apareciendo.
-
-#### RF-09. Mostrar una alerta con tasa peligrosa
+#### RF-05. Generar la explicación y los consejos, con respaldo si falla la IA
 
 | Campo | Descripción |
 |---|---|
-| Enunciado | El sistema deberá mostrar una alerta destacada cuando el nivel sea peligroso, que recomiende dejar de beber y llamar al 112 si hay vómitos, confusión o somnolencia intensa. |
-| Justificación | Con tasas muy altas hay riesgo para la salud. |
-| Actor | ACT-01 |
-| Prioridad | Alta |
-| Fuente | FUE-01 |
-| Precondiciones | El nivel calculado es peligroso. |
-| Entradas | Nivel. |
-| Comportamiento esperado | La alerta se muestra por encima de la explicación y se anuncia a los lectores de pantalla. No aparece con otros niveles. |
-| Salidas y postcondiciones | Alerta visible. |
-| Errores o alternativas | Los consejos de respaldo también incluyen la llamada al 112. |
-| Dependencias | RF-05, RF-10, RF-11 |
-
-**Criterios de aceptación:**
-
-- **CA-RF09-01:** Dado un resultado con nivel peligroso, cuando se muestra la explicación, entonces aparece la alerta con la mención al 112.
-- **CA-RF09-02:** Dado un resultado con nivel alegre, cuando se muestra la explicación, entonces no aparece la alerta.
-
-#### RF-10. Generar explicación y consejos con IA
-
-| Campo | Descripción |
-|---|---|
-| Enunciado | El sistema deberá pedir a un modelo de lenguaje la tasa, una explicación de 2 a 4 frases y de 2 a 4 consejos, enviándole solo valores numéricos y de listas cerradas, nunca texto libre del usuario. |
-| Justificación | Ofrece una explicación cercana y personalizada (OBJ-04). |
+| Enunciado | El sistema deberá pedir a un modelo de lenguaje la tasa, una explicación de 2 a 4 frases y de 2 a 4 consejos, enviándole solo valores numéricos y de listas cerradas, y deberá devolver igualmente un resultado completo, con la fórmula propia y consejos genéricos, cuando la IA no esté disponible o responda algo no válido. |
+| Justificación | Ofrece una explicación personalizada sin que el fallo de un servicio externo deje al usuario sin resultado (OBJ-04). |
 | Actor | ACT-02 |
-| Prioridad | Media |
-| Fuente | FUE-01 |
-| Precondiciones | Los datos han superado RF-03 y hay una clave de IA configurada. |
-| Entradas | Datos validados de RF-01 y RF-02. |
-| Comportamiento esperado | La respuesta debe ser un JSON con tasa, explicación y consejos. El sistema la valida (tasa entre 0 y 6 g/L, explicación no vacía, de 1 a 6 consejos). El prompt exige no dar trucos para bajar la tasa y recordar que no se debe conducir. |
-| Salidas y postcondiciones | Explicación y consejos mostrados junto al resultado. |
-| Errores o alternativas | Si no hay clave, hay un fallo de red, se agotan 30 s o la respuesta no es válida, se aplica RF-11. |
-| Dependencias | RF-03, DEP-01 |
-
-**Criterios de aceptación:**
-
-- **CA-RF10-01:** Dada una respuesta válida de la IA, cuando el sistema la recibe, entonces muestra su explicación y sus consejos.
-- **CA-RF10-02:** Dada una respuesta de la IA con una tasa de 8 g/L o sin JSON, cuando el sistema la recibe, entonces la descarta y aplica RF-11.
-
-#### RF-11. Responder sin IA mediante la fórmula de respaldo
-
-| Campo | Descripción |
-|---|---|
-| Enunciado | El sistema deberá devolver un resultado completo con la fórmula de Widmark propia y una explicación y consejos genéricos cuando la IA no esté disponible o devuelva una respuesta no válida. |
-| Justificación | La aplicación debe seguir funcionando aunque falle un servicio externo (OBJ-04). |
-| Actor | ACT-03 |
 | Prioridad | Alta |
 | Fuente | FUE-01 |
-| Precondiciones | Ha fallado RF-10. |
-| Entradas | Datos validados. |
-| Comportamiento esperado | Calcula la tasa según RF-04, el nivel según RF-05, y usa una explicación genérica y consejos propios del nivel. El fallo se anota, solo con su motivo, en la consola del servidor y, en local, en `logs/errores.txt`. La respuesta indica `origen` igual a «respaldo». |
-| Salidas y postcondiciones | Respuesta con el mismo formato que con IA, sin error visible. |
-| Errores o alternativas | Ninguna. |
-| Dependencias | RF-04, RF-05, RF-10 |
+| Precondiciones | Los datos han superado RF-02. |
+| Entradas | Datos validados de RF-01. |
+| Comportamiento esperado | Hace una sola llamada a la IA por solicitud válida y exige un JSON con tasa, explicación y consejos. Lo valida (tasa entre 0 y 6 g/L, explicación no vacía, de 1 a 6 consejos). Si no hay clave, hay un fallo de red o de HTTP, se agotan 30 s o la respuesta no es válida, usa la fórmula de RF-03, una explicación genérica y consejos propios del nivel. La respuesta indica en `origen` si viene de la IA («ia») o del respaldo («respaldo»). El motivo del fallo se anota en la consola del servidor y, en local, en `logs/errores.txt`, sin datos del usuario ni respuesta de la IA. |
+| Salidas y postcondiciones | Explicación y consejos junto al resultado, con el mismo formato en los dos casos. |
+| Errores o alternativas | El usuario no ve ningún error por un fallo de la IA. Con nivel peligroso, los consejos genéricos incluyen dejar de beber y llamar al 112. |
+| Dependencias | RF-02, RF-03, DEP-01 |
 
 **Criterios de aceptación:**
 
-- **CA-RF11-01:** Dado un servidor sin clave de IA, cuando se solicita un cálculo válido, entonces responde con tasa, nivel, horas hasta cero, explicación y consejos, con el campo `origen` igual a «respaldo».
-- **CA-RF11-02:** Dado un nivel peligroso con la IA caída, cuando se solicita el cálculo, entonces los consejos incluyen dejar de beber y llamar al 112.
+- **CA-RF05-01:** Dada una respuesta válida de la IA, cuando el sistema la recibe, entonces muestra su explicación y sus consejos, `origen` es «ia» y se ha hecho una sola llamada.
+- **CA-RF05-02:** Dado un fallo de la IA (sin clave, error 401, 429 o 500, tiempo agotado, respuesta sin JSON o con una tasa de 8 g/L), cuando se solicita un cálculo válido, entonces responde con tasa, nivel, horas hasta cero, explicación y consejos, con `origen` igual a «respaldo».
+- **CA-RF05-03:** Dado un fallo de la IA, cuando el servidor lo gestiona, entonces anota el motivo en la consola y en el archivo, sin la clave ni los datos de la solicitud, y la respuesta al usuario no incluye la clave ni errores internos.
 
-#### RF-12. Informar de los errores y permitir reintentar
+#### RF-06. Informar de los errores y permitir reintentar
 
 | Campo | Descripción |
 |---|---|
@@ -409,12 +281,12 @@ Los requisitos funcionales describen las acciones y comportamientos que debe ofr
 | Comportamiento esperado | Mensajes: 422, datos no válidos; 500, problema del servidor; 502, el servicio de explicación no responde; sin conexión, comprobar la red; otros códigos, error del servidor con su código. |
 | Salidas y postcondiciones | Se oculta el resultado anterior y se muestra el error. «Reintentar» repite el cálculo con los datos actuales. |
 | Errores o alternativas | Ninguna. |
-| Dependencias | RF-03 |
+| Dependencias | RF-02 |
 
 **Criterios de aceptación:**
 
-- **CA-RF12-01:** Dado un servidor inalcanzable, cuando el usuario pide el cálculo, entonces aparece el mensaje de falta de conexión y el botón «Reintentar».
-- **CA-RF12-02:** Dado un error mostrado, cuando el usuario pulsa «Reintentar», entonces se repite el cálculo con los datos actuales del formulario.
+- **CA-RF06-01:** Dado un servidor inalcanzable, cuando el usuario pide el cálculo, entonces aparece el mensaje de falta de conexión y el botón «Reintentar».
+- **CA-RF06-02:** Dado un error mostrado, cuando el usuario pulsa «Reintentar», entonces se repite el cálculo con los datos actuales del formulario.
 
 ## 4. Requisitos no funcionales
 
@@ -422,12 +294,10 @@ Describen propiedades de calidad y condiciones de funcionamiento. Los umbrales n
 
 | ID | Categoría | Requisito medible | Condiciones de comprobación | Criterio de aceptación | Prioridad |
 |---|---|---|---|---|---|
-| RNF-01 | Rendimiento | Con la fórmula de respaldo, el servidor deberá responder en un máximo de 1 segundo. Con IA, esperará como máximo 30 segundos antes de aplicar RF-11. | 50 solicitudes válidas con el servidor en local, y una prueba con el proveedor de IA simulado sin respuesta. | Al menos el 95 % de las 50 solicitudes sin IA tarda 1 s o menos. La prueba con IA sin respuesta termina en 30 s o menos con un resultado válido. | Media |
-| RNF-02 | Seguridad y privacidad | La clave de la IA solo existirá en el servidor, y el sistema no almacenará los datos del usuario. | Revisión del código y del repositorio, y del tráfico entre el navegador y el servidor. | La clave no aparece en el repositorio, en el código del frontend ni en las respuestas de la API, y el sistema no guarda datos entre solicitudes. | Alta |
-| RNF-03 | Usabilidad y accesibilidad | Todos los campos deberán tener etiqueta, ser utilizables con el teclado y el resultado y los errores deberán anunciarse a los lectores de pantalla. | Un usuario sin experiencia previa, en ordenador y en móvil, y una revisión con el teclado y un lector de pantalla. | El usuario completa un cálculo sin ayuda. Todos los campos tienen etiqueta, y el resultado y las alertas se anuncian. | Media |
-| RNF-04 | Fiabilidad y recuperación | Un fallo del proveedor de IA no deberá impedir obtener el resultado. | Simular falta de clave, error 500, tiempo agotado y respuesta no válida. | En los cuatro casos el sistema devuelve un resultado completo y el usuario no ve un error. | Alta |
-| RNF-05 | Compatibilidad | La aplicación deberá funcionar en las versiones actuales de Chrome, Firefox, Edge y Safari, y en pantallas de móvil. | Navegadores y versiones: Pendiente de acordar. Anchura de móvil de 360 px. | Se puede completar un cálculo en cada navegador, sin desplazamiento horizontal en móvil. | Media |
-| RNF-06 | Mantenibilidad y pruebas | La lógica de cálculo, la clasificación y la interpretación de la respuesta de la IA deberán tener pruebas automáticas. | Ejecución de las pruebas del backend y del frontend en el entorno de desarrollo. | Todas las pruebas automáticas pasan. | Media |
+| RNF-01 | Seguridad y privacidad | La clave de la IA solo existirá en el servidor, el sistema no almacenará los datos del usuario y el registro de errores no contendrá datos del usuario ni respuestas de la IA. | Revisión del código y del repositorio, revisión del tráfico entre el navegador y el servidor, y prueba del registro con un fallo simulado. | La clave no aparece en el repositorio, en el código del frontend ni en las respuestas de la API. El sistema no guarda datos entre solicitudes. El registro solo contiene el motivo del fallo. | Alta |
+| RNF-02 | Fiabilidad y rendimiento | Un fallo del proveedor de IA no deberá impedir obtener el resultado. El sistema esperará como máximo 30 segundos a la IA antes de usar el respaldo, y con el respaldo responderá en un máximo de 1 segundo. | Simular falta de clave, error 401, 429 y 500, tiempo agotado y respuesta no válida. Medir 50 solicitudes válidas con el respaldo en local. | En todos los fallos el sistema devuelve un resultado completo y el usuario no ve un error. Al menos el 95 % de las 50 solicitudes con el respaldo tarda 1 s o menos. | Alta |
+| RNF-03 | Usabilidad, accesibilidad y compatibilidad | Todos los campos deberán tener etiqueta y ser utilizables con el teclado, el resultado y los errores deberán anunciarse a los lectores de pantalla, y la aplicación deberá funcionar en las versiones actuales de Chrome, Firefox, Edge y Safari y en pantallas de móvil. | Un usuario sin experiencia previa, en ordenador y en móvil (360 px de ancho), y un recorrido con el teclado y con un lector de pantalla. Versiones de los navegadores: Pendiente de acordar. | El usuario completa un cálculo sin ayuda en cada navegador, todos los campos tienen etiqueta, el resultado y las alertas se anuncian y no hay desplazamiento horizontal en móvil. | Media |
+| RNF-04 | Mantenibilidad y pruebas | La lógica de cálculo, la validación de entradas, la interpretación de la respuesta de la IA y el manejo de sus fallos deberán tener pruebas automáticas que no llamen a la IA real. | Ejecución de las pruebas del backend y del frontend en el entorno de desarrollo, con la IA simulada. | Todas las pruebas automáticas pasan y ninguna consume créditos de IA. | Media |
 
 ## 5. Datos y reglas de negocio
 
@@ -447,17 +317,17 @@ El sistema no guarda ningún dato entre solicitudes (RES-04). Los datos existen 
 
 | ID | Regla | Requisitos relacionados | Fuente |
 |---|---|---|---|
-| RN-01 | La densidad del alcohol es 0,8 g/ml. Los gramos de alcohol de una bebida son volumen × graduación/100 × 0,8 × cantidad. | RF-04 | FUE-01 |
-| RN-02 | El coeficiente de distribución es 0,68 para hombres y 0,55 para mujeres. | RF-04 | FUE-01 |
-| RN-03 | El factor de estómago es 1,0 si está vacío, 0,9 con algo de comida y 0,75 si está lleno. | RF-04 | FUE-01 |
-| RN-04 | La eliminación del alcohol es de 0,15 g/L por hora. | RF-04, RF-06 | FUE-01 |
-| RN-05 | La tasa nunca es negativa: el mínimo es 0,0 g/L. | RF-04 | FUE-01 |
-| RN-06 | Los niveles son: menos de 0,2 sobrio; menos de 0,8 alegre; menos de 1,5 borracho; desde 1,5 peligroso. | RF-05 | FUE-01 |
-| RN-07 | El nivel y los avisos de seguridad los decide el sistema con reglas, nunca la IA. | RF-05, RF-08, RF-09 | FUE-01 |
-| RN-08 | Siempre se avisa de que no se debe conducir tras beber y de que el resultado es una estimación orientativa. | RF-08 | FUE-01 |
-| RN-09 | Una solicitud necesita al menos una bebida. | RF-02, RF-03 | FUE-01 |
-| RN-10 | Una tasa de la IA superior a 6 g/L se considera un error y se descarta. | RF-10, RF-11 | Decisión del equipo |
-| RN-11 | A la IA solo se le envían números y valores de listas cerradas, nunca texto libre del usuario. | RF-10 | Decisión del equipo |
+| RN-01 | La densidad del alcohol es 0,8 g/ml. Los gramos de alcohol de una bebida son volumen × graduación/100 × 0,8 × cantidad. | RF-03 | FUE-01 |
+| RN-02 | El coeficiente de distribución es 0,68 para hombres y 0,55 para mujeres. | RF-03 | FUE-01 |
+| RN-03 | El factor de estómago es 1,0 si está vacío, 0,9 con algo de comida y 0,75 si está lleno. | RF-03 | FUE-01 |
+| RN-04 | La eliminación del alcohol es de 0,15 g/L por hora. | RF-03 | FUE-01 |
+| RN-05 | La tasa nunca es negativa: el mínimo es 0,0 g/L. | RF-03 | FUE-01 |
+| RN-06 | Los niveles son: menos de 0,2 sobrio; menos de 0,8 alegre; menos de 1,5 borracho; desde 1,5 peligroso. | RF-03 | FUE-01 |
+| RN-07 | El nivel y los avisos de seguridad los decide el sistema con reglas, nunca la IA. | RF-03, RF-04 | FUE-01 |
+| RN-08 | Siempre se avisa de que no se debe conducir tras beber y de que el resultado es una estimación orientativa. | RF-04 | FUE-01 |
+| RN-09 | Una solicitud necesita al menos una bebida. | RF-01, RF-02 | FUE-01 |
+| RN-10 | Una tasa de la IA superior a 6 g/L se considera un error y se descarta. | RF-05 | Decisión del equipo |
+| RN-11 | A la IA solo se le envían números y valores de listas cerradas, nunca texto libre del usuario. | RF-05 | Decisión del equipo |
 
 ## 6. Interfaces externas
 
@@ -467,14 +337,14 @@ La interfaz es una sola página con la estética de una taberna. Está dividida 
 
 | ID | Pantalla o interacción | Usuarios | Información y acciones necesarias | Requisitos relacionados |
 |---|---|---|---|---|
-| IU-01 | Cabecera | ACT-01 | Rótulo «La Taberna», lema y el cartel «Si bebes, no conduzcas». | RF-08 |
-| IU-02 | Formulario de la persona | ACT-01 | Peso, selección de sexo, horas bebiendo y selección de estómago. | RF-01, RF-03, RNF-03 |
-| IU-03 | Lista de bebidas | ACT-01 | Por cada bebida: tipo, volumen, graduación, contador de cantidad y botón de quitar. Botón para añadir otra. | RF-02, RF-03, RNF-03 |
-| IU-04 | Botón «Ponme la cuenta» | ACT-01 | Envía el formulario. Durante el cálculo se desactiva y muestra «Sirviendo…». | RF-07 |
-| IU-05 | Panel de resultado «La cuenta» | ACT-01 | Tasa en g/L, nivel, barra de tasa, tiempo hasta cero, aviso de conducción y nota de estimación. | RF-06, RF-07, RF-08 |
-| IU-06 | Panel «El camarero dice…» | ACT-01 | Explicación, consejos y, con nivel peligroso, la alerta del 112. | RF-09, RF-10, RF-11 |
-| IU-07 | Tarjeta de error | ACT-01 | Mensaje del error y botón «Reintentar». | RF-12 |
-| IU-08 | Panel inicial vacío | ACT-01 | Invitación a rellenar los datos, los cuatro niveles y la nota de estimación. | RF-07 |
+| IU-01 | Cabecera | ACT-01 | Rótulo «La Taberna», lema y el cartel «Si bebes, no conduzcas». | RF-04 |
+| IU-02 | Formulario de la persona | ACT-01 | Peso, selección de sexo, horas bebiendo y selección de estómago. | RF-01, RF-02, RNF-03 |
+| IU-03 | Lista de bebidas | ACT-01 | Por cada bebida: tipo, volumen, graduación, contador de cantidad y botón de quitar. Botón para añadir otra. | RF-01, RF-02, RNF-03 |
+| IU-04 | Botón «Ponme la cuenta» | ACT-01 | Envía el formulario. Durante el cálculo se desactiva y muestra «Sirviendo…». | RF-04 |
+| IU-05 | Panel de resultado «La cuenta» | ACT-01 | Tasa en g/L, nivel, barra de tasa, tiempo hasta cero, aviso de conducción y nota de estimación. | RF-03, RF-04 |
+| IU-06 | Panel «El camarero dice…» | ACT-01 | Explicación, consejos y, con nivel peligroso, la alerta del 112. | RF-04, RF-05 |
+| IU-07 | Tarjeta de error | ACT-01 | Mensaje del error y botón «Reintentar». | RF-06 |
+| IU-08 | Panel inicial vacío | ACT-01 | Invitación a rellenar los datos, los cuatro niveles y la nota de estimación. | RF-04 |
 
 Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseño final es el de la aplicación.
 
@@ -482,8 +352,8 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 
 | ID | Sistema o dispositivo externo | Información intercambiada | Dirección y momento del intercambio | Formato o protocolo exigido | Respuesta ante fallos |
 |---|---|---|---|---|---|
-| INT-01 | Proveedor de IA (por defecto, OpenRouter) | Envía los datos validados en un prompt. Recibe la tasa, la explicación y los consejos. | Ambas, en cada cálculo válido. | HTTPS, `POST /chat/completions` compatible con OpenAI, autenticación con clave en cabecera y respuesta en JSON. Tiempo máximo de 30 s. | Se aplica RF-11 (fórmula de respaldo). |
-| INT-02 | Frontend y API propia | Envía la solicitud de cálculo (DAT-03) y recibe el resultado (DAT-04). | Ambas, al pulsar «Ponme la cuenta». | HTTPS, `POST /api/calcular` con JSON. También existe `GET /api/health`, que devuelve `{"status": "ok"}`. | Códigos 422, 500 y 502, o falta de conexión, según RF-12. |
+| INT-01 | Proveedor de IA (por defecto, OpenRouter) | Envía los datos validados en un prompt. Recibe la tasa, la explicación y los consejos. | Ambas, en cada cálculo válido. | HTTPS, `POST /chat/completions` compatible con OpenAI, autenticación con clave en cabecera y respuesta en JSON. Tiempo máximo de 30 s. | Se aplica RF-05 (fórmula de respaldo). |
+| INT-02 | Frontend y API propia | Envía la solicitud de cálculo (DAT-03) y recibe el resultado (DAT-04). | Ambas, al pulsar «Ponme la cuenta». | HTTPS, `POST /api/calcular` con JSON. También existe `GET /api/health`, que devuelve `{"status": "ok"}`. | Códigos 422, 500 y 502, o falta de conexión, según RF-06. |
 
 ## 7. Casos de uso o escenarios de usuario
 
@@ -495,7 +365,7 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 | Actor principal | ACT-01 |
 | Precondiciones | La aplicación está abierta y hay conexión con el servidor. |
 | Evento de inicio | El usuario abre la página. |
-| Requisitos relacionados | RF-01 a RF-08, RF-10, RN-01 a RN-09, RNF-01 |
+| Requisitos relacionados | RF-01 a RF-05, RN-01 a RN-09, RNF-02 |
 
 **Flujo principal:**
 
@@ -523,7 +393,7 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 | Actor principal | ACT-01 |
 | Precondiciones | Los datos son válidos y la IA no está disponible, o no hay clave, o responde de forma no válida. |
 | Evento de inicio | El usuario pulsa «Ponme la cuenta». |
-| Requisitos relacionados | RF-04, RF-05, RF-08, RF-09, RF-11, RNF-04 |
+| Requisitos relacionados | RF-03, RF-04, RF-05, RNF-02 |
 
 **Flujo principal:**
 
@@ -547,7 +417,7 @@ Las capturas de la aplicación están en el Anexo C. Son orientativas: el diseñ
 | Actor principal | ACT-01 |
 | Precondiciones | La tasa calculada es de 1,5 g/L o más. |
 | Evento de inicio | El sistema muestra el resultado. |
-| Requisitos relacionados | RF-05, RF-08, RF-09, RN-06, RN-07 |
+| Requisitos relacionados | RF-03, RF-04, RN-06, RN-07 |
 
 **Flujo principal:**
 
@@ -568,24 +438,16 @@ Los métodos «Automática» se ejecutan con las pruebas del proyecto y los «Ma
 
 | Requisito | Objetivo o necesidad de origen | Criterio de aceptación | ID de prueba | Método y datos de comprobación | Resultado esperado |
 |---|---|---|---|---|---|
-| RF-01 | OBJ-01, FUE-01 | CA-RF01-01, CA-RF01-02 | PR-01 | Automática en el formulario: cambiar peso a 80 kg y sexo a mujer. Probar un peso de 20 kg. | Los valores se conservan. El peso de 20 kg no permite enviar. |
-| RF-02 | OBJ-01, FUE-01 | CA-RF02-01, CA-RF02-02 | PR-02 | Automática en la lista de bebidas: añadir una bebida y quitar la única bebida. | Con la primera hay dos bebidas. La última no se puede quitar. |
-| RF-03 | OBJ-01, FUE-01 | CA-RF03-01, CA-RF03-02 | PR-03 | Automática en la API: solicitud válida, solicitud sin bebidas y solicitud con 20 kg. | Aceptada la válida. Las otras dos con código 422. |
-| RF-04 | OBJ-01, FUE-01 | CA-RF04-01, CA-RF04-02 | PR-04 | Automática: hombre de 70 kg, vacío, 0 h y 3 cañas de 200 ml al 5 %. Segundo caso con 2 h y 1 caña. | 0,50 g/L y 0,00 g/L. |
-| RF-05 | OBJ-02, FUE-01 | CA-RF05-01, CA-RF05-02 | PR-05 | Automática: tasas de 0,19, 0,20, 1,49 y 1,50. | Sobrio, alegre, borracho y peligroso. |
-| RF-06 | OBJ-02, FUE-01 | CA-RF06-01, CA-RF06-02 | PR-06 | Automática: tasa de 0,50 y de 0,00. | 3,33 h y «Ya estás a 0,0 g/L». |
-| RF-07 | OBJ-02, FUE-01 | CA-RF07-01, CA-RF07-02 | PR-07 | Automática en el panel de resultado: respuesta con tasa 0,62 y nivel alegre. Manual: observar el botón durante un cálculo. | Se ve «0.62 g/L» y «Contento». El botón muestra «Sirviendo…». |
-| RF-08 | OBJ-03, FUE-01 | CA-RF08-01, CA-RF08-02 | PR-08 | Manual: calcular un caso sobrio y otro con la IA desconectada. | Ambos avisos visibles en los dos casos. |
-| RF-09 | OBJ-03, FUE-01 | CA-RF09-01, CA-RF09-02 | PR-09 | Automática en el panel de explicación: nivel peligroso y nivel alegre. | La alerta solo aparece con peligroso. |
-| RF-10 | OBJ-04, FUE-01 | CA-RF10-01, CA-RF10-02 | PR-10 | Automática con respuestas simuladas de la IA: una válida, otra con tasa 8 y otra sin JSON. | La válida se usa. Las otras se descartan. |
-| RF-11 | OBJ-04, FUE-01 | CA-RF11-01, CA-RF11-02 | PR-11 | Automática: servidor sin clave de IA, con un caso normal y uno peligroso. | Respuesta completa en ambos. En el peligroso, consejos con el 112. |
-| RF-12 | OBJ-04, FUE-01 | CA-RF12-01, CA-RF12-02 | PR-12 | Manual: apagar el servidor, calcular y pulsar «Reintentar». | Mensaje de falta de conexión y repetición del cálculo. |
-| RNF-01 | OBJ-04 | Sección 4 | PR-13 | 50 solicitudes sin IA en local y una con la IA simulada sin respuesta. | El 95 % responde en 1 s o menos. La prueba sin respuesta termina en 30 s o menos. |
-| RNF-02 | OBJ-04 | Sección 4 | PR-14 | Inspección: buscar la clave en el repositorio, en el código del frontend y en las respuestas. | Sin coincidencias. |
-| RNF-03 | OBJ-02 | Sección 4 | PR-15 | Manual: usuario sin experiencia en ordenador y móvil, y recorrido con teclado. | Cálculo sin ayuda y campos con etiqueta. |
-| RNF-04 | OBJ-04 | Sección 4 | PR-16 | Automática: sin clave, error 500, tiempo agotado y respuesta no válida. | Resultado completo en los cuatro. |
-| RNF-05 | OBJ-02 | Sección 4 | PR-17 | Manual: cálculo en Chrome, Firefox, Edge y Safari, y a 360 px de ancho. | Cálculo completo y sin desplazamiento horizontal. |
-| RNF-06 | OBJ-01 | Sección 4 | PR-18 | Automática: ejecutar las pruebas del backend y del frontend. | Todas pasan. |
+| RF-01 | OBJ-01, FUE-01 | CA-RF01-01, CA-RF01-02, CA-RF01-03 | PR-01 | Automática en el frontend (`tests/persona.spec.ts` y `tests/bebidas.spec.ts`) y revisión manual del formulario: cambiar peso a 80 kg y sexo a mujer, añadir una bebida y quitar la única bebida. | Los valores se conservan. Con la primera hay dos bebidas. La última no se puede quitar. |
+| RF-02 | OBJ-01, FUE-01 | CA-RF02-01, CA-RF02-02 | PR-02 | Automática en la API (`api/test_contrato.py`) con la IA simulada: pesos de 30, 250, 29 y 251 kg, 0, 50 y 51 bebidas, campos ausentes, texto vacío y cuerpo que no es JSON. | Los límites se aceptan con una sola llamada a la IA. El resto da 422 y no llama a la IA. |
+| RF-03 | OBJ-01, OBJ-02, FUE-01 | CA-RF03-01, CA-RF03-02, CA-RF03-03 | PR-03 | Automática (`api/test_calculo.py`) con los casos E-01 a E-07 del Anexo E y con las tasas 0,19, 0,20, 1,49 y 1,50. | Las tasas, niveles y horas coinciden con el Anexo E. |
+| RF-04 | OBJ-02, OBJ-03, FUE-01 | CA-RF04-01, CA-RF04-02, CA-RF04-03 | PR-04 | Manual con las capturas del Anexo C: caso alegre, caso peligroso y observación del botón durante un cálculo. | Se ven la tasa, el nivel, los dos avisos y, solo con peligroso, la alerta del 112. El botón muestra «Sirviendo…». |
+| RF-05 | OBJ-04, FUE-01 | CA-RF05-01, CA-RF05-02, CA-RF05-03 | PR-05 | Automática (`api/test_ia.py` y `api/test_contrato.py`) con la IA simulada: respuesta válida, timeout, error 401, 429 y 500, sin clave, respuesta sin JSON y tasa de 12. | Con la válida, `origen` es «ia». En los fallos, `origen` es «respaldo», el resultado está completo y el registro no lleva datos del usuario. |
+| RF-06 | OBJ-04, FUE-01 | CA-RF06-01, CA-RF06-02 | PR-06 | Manual: apagar el servidor, calcular y pulsar «Reintentar». | Mensaje de falta de conexión y repetición del cálculo. |
+| RNF-01 | OBJ-04 | Sección 4 | PR-07 | Inspección: buscar la clave en el repositorio, en el código del frontend y en las respuestas. Automática: prueba del registro con un fallo simulado. | Sin coincidencias. El registro solo tiene el motivo. |
+| RNF-02 | OBJ-04 | Sección 4 | PR-08 | Automática: fallos simulados de la IA. Medida de 50 solicitudes con el respaldo en local. | Resultado completo en todos los fallos. El 95 % responde en 1 s o menos. |
+| RNF-03 | OBJ-02 | Sección 4 | PR-09 | Manual: usuario sin experiencia en ordenador y móvil, recorrido con teclado y cálculo en Chrome, Firefox, Edge y Safari. | Cálculo sin ayuda, campos con etiqueta y sin desplazamiento horizontal. |
+| RNF-04 | OBJ-01 | Sección 4 | PR-10 | Automática: ejecutar las pruebas del backend (`pytest`) y del frontend (`npm test`). | Todas pasan, sin llamar a la IA real. |
 
 ## 9. Cuestiones pendientes
 
@@ -593,12 +455,12 @@ Los métodos «Automática» se ejecutan con las pruebas del proyecto y los «Ma
 |---|---|---|---|---|---|
 | PEN-01 | Curso y grupo, asignatura y docente de los datos del documento. | Datos del documento | Daniel Mouimi y Manuel Palomares | Pendiente | Pendiente |
 | PEN-02 | Enunciado o requisitos del docente (FUE-03) y su posible conflicto con las decisiones del equipo. | Todos, RES-01 a RES-05 | Equipo | Pendiente | Pendiente |
-| PEN-03 | Confirmar los umbrales propuestos, como 1 s y el 95 % de 50 solicitudes. | RNF-01 | Equipo y docente | Pendiente | Pendiente |
-| PEN-04 | Versiones de navegadores y volumen de usuarios esperado. | RNF-05, sección 2.4 | Equipo | Pendiente | Pendiente |
+| PEN-03 | Confirmar los umbrales propuestos, como 1 s y el 95 % de 50 solicitudes. | RNF-02 | Equipo y docente | Pendiente | Pendiente |
+| PEN-04 | Versiones de navegadores y volumen de usuarios esperado. | RNF-03, sección 2.4 | Equipo | Pendiente | Pendiente |
 | PEN-05 | Fecha de entrega. | RES-05 | Docente | Pendiente | Pendiente |
-| PEN-06 | Tolerancia admitida entre la tasa que calcula la IA y la de la fórmula. Hoy se acepta cualquiera hasta 6 g/L. | RF-04, RF-10, RN-10 | Equipo | Pendiente | Pendiente |
-| PEN-07 | El README sitúa el aviso de ayuda urgente con el resultado, y en la aplicación está en el panel de la explicación. Decidir cuál es lo correcto y actualizar el documento que corresponda. | RF-09 | Equipo | Pendiente | Pendiente |
-| PEN-08 | Comprobar si el formulario limita a 50 bebidas, como hace el servidor. Si no, añadir el límite o un mensaje claro. | RF-02, RF-03 | Daniel Mouimi | Pendiente | Pendiente |
+| PEN-06 | Tolerancia admitida entre la tasa que calcula la IA y la de la fórmula. Hoy se acepta cualquiera hasta 6 g/L. | RF-03, RF-05, RN-10 | Equipo | Pendiente | Pendiente |
+| PEN-07 | El README sitúa el aviso de ayuda urgente con el resultado, y en la aplicación está en el panel de la explicación. Decidir cuál es lo correcto y actualizar el documento que corresponda. | RF-04 | Equipo | Pendiente | Pendiente |
+| PEN-08 | Comprobar si el formulario limita a 50 bebidas, como hace el servidor. Si no, añadir el límite o un mensaje claro. | RF-01, RF-02 | Daniel Mouimi | Pendiente | Pendiente |
 
 ## 10. Revisión y conformidad
 
@@ -674,15 +536,15 @@ Capturas de la aplicación en cuatro situaciones. Son orientativas: el diseño f
 
 ![Pantalla inicial](docs/img/01-inicio.png)
 
-**C.2. Resultado de nivel alegre** (RF-07, RF-08 e IU-05, IU-06). Tasa, nivel, tiempo hasta cero, avisos, explicación y consejos.
+**C.2. Resultado de nivel alegre** (RF-04 e IU-05, IU-06). Tasa, nivel, tiempo hasta cero, avisos, explicación y consejos.
 
 ![Resultado de nivel alegre](docs/img/02-resultado-alegre.png)
 
-**C.3. Resultado de nivel peligroso** (RF-09 e IU-06). Se añade la alerta que recomienda dejar de beber y llamar al 112.
+**C.3. Resultado de nivel peligroso** (RF-04 e IU-06). Se añade la alerta que recomienda dejar de beber y llamar al 112.
 
 ![Resultado de nivel peligroso](docs/img/03-resultado-peligroso.png)
 
-**C.4. Error del servidor** (RF-12 e IU-07). Mensaje y botón «Reintentar».
+**C.4. Error del servidor** (RF-06 e IU-07). Mensaje y botón «Reintentar».
 
 ![Error del servidor](docs/img/04-error.png)
 
@@ -725,7 +587,7 @@ sequenceDiagram
 
 ### Anexo E. Casos de prueba de cálculo
 
-Resultados calculados con la fórmula de Widmark de la sección 5.2, que es la misma que usa la fórmula de respaldo. El tiempo hasta cero se obtiene dividiendo la tasa sin redondear entre 0,15 y se redondea después. Por eso, a partir de la tasa ya redondeada (RF-06) pueden salir centésimas distintas. Se usan en las pruebas PR-04, PR-05 y PR-06.
+Resultados calculados con la fórmula de Widmark de la sección 5.2, que es la misma que usa la fórmula de respaldo. El tiempo hasta cero se obtiene dividiendo la tasa sin redondear entre 0,15 y se redondea después. Por eso, a partir de la tasa ya redondeada (RF-03) pueden salir centésimas distintas. Se usan en la prueba PR-03 (RF-03).
 
 | Caso | Persona | Bebidas | Horas | Gramos tras el estómago | Tasa (g/L) | Nivel | Horas hasta 0,0 |
 |---|---|---|---|---|---|---|---|
@@ -737,4 +599,4 @@ Resultados calculados con la fórmula de Widmark de la sección 5.2, que es la m
 | E-06 | Hombre, 70 kg, estómago vacío | 10 chupitos (40 ml, 40 %) | 0 | 128,00 | 2,69 | Peligroso | 17,93 |
 | E-07 | Mujer, 55 kg, estómago lleno | 4 cubatas (250 ml, 12 %) | 0 | 72,00 | 2,38 | Peligroso | 15,87 |
 
-Los casos E-01 y E-02 son los de CA-RF04-01 y CA-RF04-02. Los casos E-05 y E-06 sirven para comprobar los niveles de RF-05, y el caso E-06 es también el de la captura C.3.
+Los casos E-01 y E-02 son los de CA-RF03-01 y CA-RF03-02. Los casos E-05 y E-06 sirven para comprobar los niveles de RF-03, y el caso E-06 es también el de la captura C.3.
