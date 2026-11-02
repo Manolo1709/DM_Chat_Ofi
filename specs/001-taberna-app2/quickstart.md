@@ -47,7 +47,7 @@ Añade `https://lateberna.manoloplr.com` como origen permitido en Clerk. Para ac
 ## 6. Comprobaciones de la demo
 
 1. Entrada válida → resultado con `origen: "ia"`; repetir el cálculo da la misma tasa.
-2. Peso 20 → mensaje de datos no válidos (422).
+2. Con sesión, peso 20 → el formulario no deja enviarlo y la API respondería 422. Sin sesión, la API responde 401 antes de validar los datos.
 3. Sin sesión → botones de acceso; `curl -X POST https://lateberna.manoloplr.com/api/calcular` → 401.
 4. https://lateberna.manoloplr.com abre por HTTPS con candado.
 5. Once cálculos seguidos en un minuto → el último muestra «Has hecho demasiados cálculos».
