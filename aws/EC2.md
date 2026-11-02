@@ -15,7 +15,7 @@ La infraestructura está en `aws/terraform/`. Terraform crea el par de claves SS
 | IP pública | `52.21.114.192` (IP elástica: no cambia al parar la instancia) |
 | Dominio | `lateberna.manoloplr.com` (variable `dominio`; sin ella, la IP con guiones en sslip.io) |
 | URL | https://lateberna.manoloplr.com |
-| Commit desplegado | `4375ac7` |
+| Commit desplegado | `2cb61a0` (los commits posteriores solo cambian documentación) |
 | Versiones | Terraform `1.16.5`, Docker `29.9.2`, Compose `v5.7.0` |
 
 ## 0. Requisitos en el PC
