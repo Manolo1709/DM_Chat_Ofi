@@ -1,24 +1,12 @@
 # =====================================================================
-# .github/workflows/ci-cd.yml - CI/CD para AWS (ECR + ECS Fargate / App Runner)
+# .github/workflows/ci-cd.yml - CI de La Taberna (solo pruebas)
 # =====================================================================
-# Requisitos en GitHub Secrets/Variables:
-#   AWS_ACCOUNT_ID          - ID de cuenta AWS (12 dígitos)
-#   AWS_REGION              - Región (ej. eu-west-1)
-#   ECR_REPOSITORY          - Nombre repo ECR (ej. la-taberna)
-#   ECS_CLUSTER             - Nombre cluster ECS (para deploy ECS)
-#   ECS_SERVICE             - Nombre servicio ECS (para deploy ECS)
-#   ECS_TASK_DEFINITION     - Archivo task-definition.json (para deploy ECS)
-#   APP_RUNNER_SERVICE_ARN  - ARN del servicio App Runner (para deploy App Runner)
-#   LLM_API_KEY             - Clave API OpenRouter/OpenAI (secreto)
-#   LLM_BASE_URL            - Base URL (opcional, default: https://openrouter.ai/api/v1)
-#   LLM_MODEL               - Modelo (opcional, default: nvidia/nemotron-3.5-lightning:free)
-#
-# Opciones de deploy (elige una):
-#   1. ECS Fargate: comenta sección "Deploy to App Runner"
-#   2. App Runner:  comenta sección "Deploy to ECS"
+# El despliegue no se hace aquí: la app corre en EC2 con Docker Compose
+# (ver aws/EC2.md) y se actualiza con `git pull` + `docker compose up`.
+# Las pruebas usan valores ficticios; no hace falta ningún secreto.
 # =====================================================================
 
-name: CI/CD - La Taberna
+name: CI - La Taberna
 
 on:
   push:
@@ -27,15 +15,7 @@ on:
     branches: [main, master]
   workflow_dispatch:  # Permite ejecución manual
 
-env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
-  ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY || 'la-taberna' }}
-  IMAGE_TAG: ${{ github.sha }}
-
 jobs:
-  # ---------------------------------------------------------------------
-  # TEST: Tests backend + frontend
-  # ---------------------------------------------------------------------
   test:
     name: Test (Python + Node)
     runs-on: ubuntu-latest
@@ -54,8 +34,8 @@ jobs:
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
+          pip install -r requirements-dev.txt
+          pip install pytest-cov
 
       - name: Run backend tests
         env:
@@ -64,13 +44,7 @@ jobs:
           LLM_MODEL: test-model
           LOG_ARCHIVO: false
         run: |
-          pytest api/ -v --cov=api --cov-report=xml --cov-fail-under=80
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          flags: backend
+          pytest api/ tests/ -v --cov=api --cov-report=term --cov-fail-under=80
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -86,128 +60,3 @@ jobs:
 
       - name: Typecheck frontend
         run: npm run typecheck
-
-  # ---------------------------------------------------------------------
-  # BUILD: Build Docker image y push a ECR
-  # ---------------------------------------------------------------------
-  build:
-    name: Build & Push to ECR
-    needs: test
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      id-token: write
-      contents: read
-      attestations: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
-          role-session-name: GitHubActions-${{ github.run_id }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
-        run: |
-          # Build multi-arch para compatibilidad (amd64 + arm64)
-          docker buildx create --use --name multiarch
-          docker buildx build \
-            --platform linux/amd64,linux/arm64 \
-            --tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} \
-            --tag ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest \
-            --push \
-            --cache-from type=registry,ref=${ECR_REGISTRY}/${ECR_REPOSITORY}:buildcache \
-            --cache-to type=registry,ref=${ECR_REGISTRY}/${ECR_REPOSITORY}:buildcache,mode=max \
-            .
-
-      - name: Output image URI
-        run: |
-          echo "IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
-          echo "IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}" >> $GITHUB_OUTPUT
-
-  # ---------------------------------------------------------------------
-  # DEPLOY ECS FARGATE (opción 1)
-  # ---------------------------------------------------------------------
-  deploy-ecs:
-    name: Deploy to ECS Fargate
-    needs: build
-    if: ${{ vars.ECS_CLUSTER != '' && vars.ECS_SERVICE != '' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
-          role-session-name: GitHubActions-${{ github.run_id }}
-
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ vars.ECS_TASK_DEFINITION }} \
-            --query 'taskDefinition' > task-definition.json
-
-      - name: Update task definition with new image
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: app
-          image: ${{ needs.build.outputs.IMAGE_URI }}
-
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ vars.ECS_SERVICE }}
-          cluster: ${{ vars.ECS_CLUSTER }}
-          wait-for-service-stability: true
-
-  # ---------------------------------------------------------------------
-  # DEPLOY APP RUNNER (opción 2 - más simple)
-  # ---------------------------------------------------------------------
-  deploy-apprunner:
-    name: Deploy to AWS App Runner
-    needs: build
-    if: ${{ vars.APP_RUNNER_SERVICE_ARN != '' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    environment: production
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
-          role-session-name: GitHubActions-${{ github.run_id }}
-
-      - name: Trigger App Runner deployment
-        run: |
-          aws apprunner start-deployment \
-            --service-arn ${{ vars.APP_RUNNER_SERVICE_ARN }} \
-            --image-identifier ${{ needs.build.outputs.IMAGE_URI }} \
-            --image-configuration '{"Port":"8000","RuntimeEnvironmentVariables":{"LLM_API_KEY":"${{ secrets.LLM_API_KEY }}","LLM_BASE_URL":"${{ vars.LLM_BASE_URL || 'https://openrouter.ai/api/v1' }}","LLM_MODEL":"${{ vars.LLM_MODEL || 'nvidia/nemotron-3.5-lightning:free' }}","LOG_ARCHIVO":"false","LOG_LEVEL":"INFO","APP_ENV":"production"}}'
-
-      - name: Wait for deployment
-        run: |
-          echo "Deployment initiated. Check App Runner console for status."
-          # Opcional: esperar a que termine (puede tardar varios minutos)
-          # aws apprunner wait deployment-succeeded --service-arn ${{ vars.APP_RUNNER_SERVICE_ARN }}

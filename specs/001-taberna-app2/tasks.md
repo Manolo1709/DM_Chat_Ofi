@@ -25,7 +25,7 @@ description: "Lista de tareas de La Taberna (App 2)"
 - [X] T002 [P] Dependencias de Python en `requirements.txt` y `requirements-dev.txt` (añadir `clerk-backend-api`)
 - [X] T003 [P] Dependencias de Node en `package.json` (añadir `@clerk/vue`)
 - [X] T004 [P] `.gitignore` con `.env`, `logs/`, `.venv`, `node_modules`, `dist`
-- [ ] T005 [P] Commitear `.env.example` con valores ficticios para Clerk y la IA
+- [X] T005 [P] Commitear `.env.example` con valores ficticios para Clerk y la IA
 - [ ] T006 [P] Instalar y configurar Tailwind CSS en `vite.config.ts` y `src/style.css`
 
 ---
@@ -115,10 +115,10 @@ description: "Lista de tareas de La Taberna (App 2)"
 - [X] T037 `docker-compose.yml` con backend solo en red interna y secretos por `env_file`
 - [X] T038 `docker-compose.aws.yml` y `docker/Caddyfile` con HTTPS
 - [X] T039 [P] Terraform en `aws/terraform/` con SSH solo desde la IP de administración
-- [ ] T040 Commitear `docker/`, `docker-compose*.yml`, `.dockerignore` y `aws/` (la instancia clona el repo)
-- [ ] T041 `terraform apply`, desplegar con Compose y añadir el origen HTTPS en Clerk
-- [ ] T042 Rellenar la tabla de datos de despliegue en `aws/EC2.md`
-- [ ] T043 Corregir `.github/workflows/ci-cd.yml`: dejar solo las pruebas o desplegar en EC2; ahora construye un `Dockerfile` raíz que no existe
+- [X] T040 Commitear `docker/`, `docker-compose*.yml`, `.dockerignore` y `aws/` (la instancia clona el repo)
+- [X] T041 `terraform apply`, desplegar con Compose y añadir el origen HTTPS en Clerk
+- [X] T042 Rellenar la tabla de datos de despliegue en `aws/EC2.md`
+- [X] T043 Corregir `.github/workflows/ci-cd.yml`: dejar solo las pruebas o desplegar en EC2; ahora construye un `Dockerfile` raíz que no existe
 
 ---
 
