@@ -12,7 +12,7 @@ SPA de una pantalla en Vue 3 que envía una solicitud de cálculo autenticada co
 
 **Lenguaje/versión**: Python 3.12 (backend) y TypeScript 6 con Vue 3.5 (frontend)
 
-**Dependencias principales**: FastAPI, Pydantic v2, httpx, python-dotenv, clerk-backend-api; Vue 3, Vite, @clerk/vue y Tailwind CSS
+**Dependencias principales**: FastAPI, Pydantic v2, httpx, python-dotenv, clerk-backend-api; Vue 3, Vite y @clerk/vue (sin Tailwind: CSS propio)
 
 **Almacenamiento**: ninguno (prohibido por la constitución). El límite de peticiones vive en memoria del proceso.
 

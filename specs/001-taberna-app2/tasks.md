@@ -26,7 +26,7 @@ description: "Lista de tareas de La Taberna (App 2)"
 - [X] T003 [P] Dependencias de Node en `package.json` (añadir `@clerk/vue`)
 - [X] T004 [P] `.gitignore` con `.env`, `logs/`, `.venv`, `node_modules`, `dist`
 - [X] T005 [P] Commitear `.env.example` con valores ficticios para Clerk y la IA
-- [ ] T006 [P] Instalar y configurar Tailwind CSS en `vite.config.ts` y `src/style.css`
+- [X] ~~T006 [P] Instalar y configurar Tailwind CSS en `vite.config.ts` y `src/style.css`~~ (descartada: Tailwind no es obligatorio; se mantiene el CSS propio)
 
 ---
 
