@@ -1,0 +1,43 @@
+# =====================================================================
+# docker-compose.dev.yml - Override para desarrollo con hot-reload
+# =====================================================================
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# =====================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: combined-dev
+    container_name: la-taberna-dev
+    ports:
+      - "5173:5173"  # Vite dev server
+      - "8000:8000"  # FastAPI + Uvicorn
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      - LLM_MODEL=${LLM_MODEL:-poolside/laguna-s-2.1:free}
+      - LOG_ARCHIVO=true
+      - LOG_LEVEL=DEBUG
+      - APP_ENV=development
+    env_file:
+      - .env
+    volumes:
+      # Hot-reload: montar código fuente
+      - ./api:/app/api
+      - ./src:/app/frontend/src
+      - ./index.html:/app/frontend/index.html
+      - ./vite.config.ts:/app/frontend/vite.config.ts
+      - ./tsconfig*.json:/app/frontend/
+      - ./public:/app/frontend/public
+      - ./logs:/app/logs
+    restart: unless-stopped
+    # Healthcheck simplificado para dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

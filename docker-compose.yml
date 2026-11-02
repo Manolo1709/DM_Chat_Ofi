@@ -1,0 +1,42 @@
+# La Taberna (App 2): dos contenedores con Docker Compose.
+#
+#   frontend  nginx con la SPA compilada; publica el puerto 8080 del equipo
+#   backend   FastAPI + Uvicorn; solo accesible desde la red interna
+#
+# Uso:
+#   docker compose up -d --build     construir y arrancar
+#   docker compose ps                ver el estado
+#   docker compose logs -f backend   ver los avisos de la API
+#   docker compose down              parar y borrar los contenedores
+#
+# Los secretos se leen de .env (nunca se suben a Git ni se copian a las imágenes).
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: taberna-backend
+    env_file:
+      - .env
+    environment:
+      # Origen desde el que se abre la web; Clerk solo acepta tokens de aquí.
+      # Sustituye al FRONTEND_ORIGIN del .env, que es el de npm run dev (5173).
+      FRONTEND_ORIGIN: http://localhost:${PUERTO_WEB:-8080}
+    expose:
+      - "8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      args:
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:?Falta VITE_CLERK_PUBLISHABLE_KEY en .env}
+    container_name: taberna-frontend
+    ports:
+      - "${PUERTO_WEB:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

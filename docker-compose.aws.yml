@@ -1,0 +1,38 @@
+# Añadido para la instancia EC2: pone Caddy delante con HTTPS.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d --build
+#
+# Caddy pide el certificado a Let's Encrypt para DOMINIO (por ejemplo
+# 3-250-12-34.sslip.io, que apunta a la IP pública de la instancia) y
+# reenvía todo al contenedor del frontend. Solo Caddy publica puertos.
+
+services:
+  backend:
+    environment:
+      # Clerk solo acepta tokens emitidos para esta dirección
+      FRONTEND_ORIGIN: https://${DOMINIO:?Falta DOMINIO en .env}
+
+  frontend:
+    # En EC2 el frontend no se publica: solo se llega a él a través de Caddy
+    ports: !reset []
+
+  proxy:
+    image: caddy:2.10-alpine
+    container_name: taberna-proxy
+    environment:
+      DOMINIO: ${DOMINIO:?Falta DOMINIO en .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Solo el certificado TLS y la configuración de Caddy, ningún dato de la app
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

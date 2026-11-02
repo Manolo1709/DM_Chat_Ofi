@@ -1,0 +1,46 @@
+# =====================================================================
+# aws/apprunner-config.yaml - Configuración para AWS App Runner
+# =====================================================================
+# Uso:
+#   1. Crear servicio App Runner desde consola o CLI
+#   2. Apuntar a este repo (GitHub) o usar imagen ECR
+#   3. Configurar variables de entorno y secretos
+# =====================================================================
+
+version: 1.0
+runtime: python3
+build:
+  commands:
+    pre-build:
+      - echo "Pre-build: instalando dependencias del sistema si hace falta"
+    build:
+      - echo "Build: la imagen ya viene construida en ECR"
+    post-build:
+      - echo "Post-build completado"
+run:
+  runtime-version: "3.12"
+  command: uvicorn api.index:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
+  network:
+    port: 8000
+    env: PORT
+  env:
+    - name: LLM_BASE_URL
+      value: "https://openrouter.ai/api/v1"
+    - name: LLM_MODEL
+      value: "poolside/laguna-s-2.1:free"
+    - name: LOG_ARCHIVO
+      value: "false"
+    - name: LOG_LEVEL
+      value: "INFO"
+    - name: APP_ENV
+      value: "production"
+  secrets:
+    - name: LLM_API_KEY
+      value: "{{secretsmanager:la-taberna/llm-api-key}}"
+observability:
+  logging:
+    destination: cloudwatch
+    configuration:
+      log-group: /aws/apprunner/la-taberna
+  tracing:
+    vendor: awsxray

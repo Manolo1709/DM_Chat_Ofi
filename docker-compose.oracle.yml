@@ -1,0 +1,17 @@
+# Despliegue en el servidor de Oracle Cloud, publicado con un túnel de Cloudflare.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.oracle.yml up -d --build
+#
+# El túnel (contenedor cloudflared, red del host) envía el dominio público a
+# http://localhost:8084, así que el puerto solo escucha en 127.0.0.1 y no hay
+# que abrir nada en Oracle. El HTTPS lo pone Cloudflare.
+
+services:
+  backend:
+    environment:
+      # Dirección pública de la web; Clerk solo acepta tokens de aquí
+      FRONTEND_ORIGIN: ${ORIGEN_PUBLICO:?Falta ORIGEN_PUBLICO en .env}
+
+  frontend:
+    ports: !override
+      - "127.0.0.1:${PUERTO_WEB:-8084}:80"

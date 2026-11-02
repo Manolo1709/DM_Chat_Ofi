@@ -1,0 +1,106 @@
+# =====================================================================
+# Dockerfile.dev - Desarrollo con hot-reload (Vite + Uvicorn --reload)
+# =====================================================================
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#   # O directamente:
+#   docker build -f Dockerfile.dev -t la-taberna-dev .
+#   docker run -p 5173:5173 -p 8000:8000 -v .:/app la-taberna-dev
+# =====================================================================
+
+FROM node:22-alpine AS dev-base
+
+WORKDIR /app
+
+# Instalar dependencias del sistema para desarrollo
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    bash \
+    curl
+
+# Usuario no-root
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup -h /app -s /sbin/nologin
+
+# ---------------------------------------------------------------
+# Stage: Frontend dev server (Vite)
+# ---------------------------------------------------------------
+FROM dev-base AS frontend-dev
+
+WORKDIR /app/frontend
+
+# Copiar package files para cache
+COPY package*.json ./
+RUN npm ci --prefer-offline --no-audit --no-fund
+
+# Exponer puerto Vite
+EXPOSE 5173
+
+# Comando: Vite dev server con host 0.0.0.0 para acceso externo
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+
+# ---------------------------------------------------------------
+# Stage: Backend dev server (FastAPI + Uvicorn --reload)
+# ---------------------------------------------------------------
+FROM dev-base AS backend-dev
+
+WORKDIR /app
+
+# Instalar dependencias Python
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Instalar uvicorn con reload y watchfiles
+RUN pip install --no-cache-dir "uvicorn[standard]" watchfiles
+
+# Copiar código API
+COPY api/ ./api/
+
+# Variables de entorno para desarrollo
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UVICORN_HOST=0.0.0.0 \
+    UVICORN_PORT=8000 \
+    LOG_ARCHIVO=true \
+    LOG_LEVEL=DEBUG \
+    APP_ENV=development
+
+EXPOSE 8000
+
+# Comando: Uvicorn con reload observando cambios en api/
+CMD ["uvicorn", "api.index:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/api", "--proxy-headers", "--forwarded-allow-ips=*"]
+
+# ---------------------------------------------------------------
+# Stage combinado: Todo en uno para docker-compose simple
+# (usa supervisord o similar para correr ambos procesos)
+# ---------------------------------------------------------------
+FROM dev-base AS combined-dev
+
+WORKDIR /app
+
+# Instalar supervisord
+RUN apk add --no-cache supervisor
+
+# Python deps
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt "uvicorn[standard]" watchfiles
+
+# Node deps
+COPY package*.json ./frontend/
+RUN cd frontend && npm ci --prefer-offline --no-audit --no-fund
+
+# Copiar código
+COPY api/ ./api/
+COPY src/ ./frontend/src/
+COPY index.html ./frontend/
+COPY vite.config.ts ./frontend/
+COPY tsconfig*.json ./frontend/
+COPY public/ ./frontend/public/ 2>/dev/null || true
+
+# Config supervisord
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+EXPOSE 5173 8000
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

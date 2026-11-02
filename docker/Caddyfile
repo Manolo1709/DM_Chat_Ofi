@@ -1,0 +1,6 @@
+# HTTPS automático con Let's Encrypt para el dominio de la instancia.
+# Las peticiones por http se redirigen solas a https.
+{$DOMINIO} {
+	encode gzip
+	reverse_proxy frontend:80
+}

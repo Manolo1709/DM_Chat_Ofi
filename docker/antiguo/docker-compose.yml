@@ -1,0 +1,68 @@
+# =====================================================================
+# docker-compose.yml - Desarrollo local y testing del contenedor Docker
+# =====================================================================
+# Uso:
+#   docker compose up --build         # Levantar y ver logs
+#   docker compose up -d --build      # Detached
+#   docker compose down               # Parar y limpiar
+#   docker compose logs -f            # Ver logs
+# =====================================================================
+
+services:
+  # ---------------------------------------------------------------
+  # App principal: FastAPI + Frontend estático (single container)
+  # ---------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Para desarrollo rápido, comenta la línea de arriba y usa:
+      # dockerfile: Dockerfile.dev
+    container_name: la-taberna-app
+    ports:
+      - "8000:8000"
+    environment:
+      # --- Configuración de la IA (OpenRouter / OpenAI-compatible) ---
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      - LLM_MODEL=${LLM_MODEL:-poolside/laguna-s-2.1:free}
+      # --- Logs ---
+      - LOG_ARCHIVO=true
+      - LOG_LEVEL=DEBUG
+      # --- App ---
+      - APP_ENV=development
+    env_file:
+      - .env          # Carga .env local si existe (no commitear claves reales)
+    volumes:
+      # Montar logs para inspección en local
+      - ./logs:/app/logs
+      # Para desarrollo con hot-reload, descomenta y usa Dockerfile.dev:
+      # - ./api:/app/api
+      # - ./src:/app/src
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health', timeout=3)"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  # ---------------------------------------------------------------
+  # Opcional: Redis para cache / rate limiting futuro
+  # ---------------------------------------------------------------
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: la-taberna-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis-data:/data
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 10s
+  #     timeout: 3s
+  #     retries: 3
+
+# volumes:
+#   redis-data:
