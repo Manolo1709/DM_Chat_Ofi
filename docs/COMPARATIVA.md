@@ -12,9 +12,9 @@ Los datos salen del historial de Git (`git log`). Lo que el repositorio no puede
 | App 1: base, frontend, API, cálculo e IA | 15/10/2026 | Daniel Mouimi, Manuel Palomares | 10 commits: `6e25605` a `a11e89f` |
 | App 1: ERS y registro de errores | 19/10/2026 | Manolo1709, dmourom182 | `ab5b7b2`, `961f834`, `d176bd2` |
 | Clerk (frontend, backend y pruebas) | 20/10/2026 a 29/10/2026 | dmourom182 | `050f0ea`, `27730bf`, `f4c2967`, `b139f3a` |
-| App 2: Spec Kit (constitución, spec, plan, contrato y tareas) | 02/11/2026 | Manuel Palomares | `05635fb` |
-| App 2: Docker Compose | 02/11/2026 | Manuel Palomares | `d34cef5` |
-| App 2: arreglo de la tasa, AWS, CI, pruebas de Clerk y documentación | 02/11/2026 | Manolo1709 | De `f936c2c` en adelante |
+| App 2: Spec Kit (constitución, spec, plan, contrato y tareas) | 02/11/2026 | Manuel Palomares | `1c93867` |
+| App 2: Docker Compose | 02/11/2026 | Manuel Palomares | `0e1fc67` |
+| App 2: arreglo de la tasa, AWS, CI, pruebas de Clerk y documentación | 02/11/2026 | Manolo1709 | De `4375ac7` en adelante |
 
 Los 10 commits de la App 1 tienen la misma hora (15/10/2026 13:41), así que el historial no sirve para medir cuánto se tardó en ella: se subió de una vez.
 
@@ -82,10 +82,10 @@ Los escenarios son los criterios de aceptación de la ERS (CA-RF01 a CA-RF09) y 
 
 | Parte | Trabajo | Commits | Tiempo |
 |---|---|---|---|
-| Clerk | Plugin en Vue, botones modales, token en cada petición, verificación con `authenticate_request`, límite por usuario y pruebas | `050f0ea`, `27730bf`, `f4c2967`, `b139f3a`, `e5470ef`, `43181e2` | _Pendiente: completar por el grupo_ |
-| Contenedores | Dockerfiles de backend y frontend, nginx, Compose con red interna y Caddy con HTTPS | `d34cef5` | _Pendiente: completar por el grupo_ |
-| AWS | Terraform (clave SSH, grupo de seguridad, instancia, IP elástica), `user-data.sh`, dominio propio y guía `aws/EC2.md` | `3492d21` | _Pendiente: completar por el grupo_ |
-| CI | GitHub Actions con pruebas y typecheck | `100dd96`, `ea1bb00` | _Pendiente: completar por el grupo_ |
+| Clerk | Plugin en Vue, botones modales, token en cada petición, verificación con `authenticate_request`, límite por usuario y pruebas | `050f0ea`, `27730bf`, `f4c2967`, `b139f3a`, `4489c54`, `ccb342a` | _Pendiente: completar por el grupo_ |
+| Contenedores | Dockerfiles de backend y frontend, nginx, Compose con red interna y Caddy con HTTPS | `0e1fc67` | _Pendiente: completar por el grupo_ |
+| AWS | Terraform (clave SSH, grupo de seguridad, instancia, IP elástica), `user-data.sh`, dominio propio y guía `aws/EC2.md` | `88f714b` | _Pendiente: completar por el grupo_ |
+| CI | GitHub Actions con pruebas y typecheck | `04e2f2b`, `42e2e42` | _Pendiente: completar por el grupo_ |
 
 ## 7. Conclusión
 
