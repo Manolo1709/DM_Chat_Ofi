@@ -23,9 +23,9 @@ Los 10 commits de la App 1 tienen la misma hora (15/10/2026 13:41), así que el 
 | Medida | App 1 | App 2 |
 |---|---|---|
 | Días con commits | 2 (15/10 y 19/10), más 4 días de Clerk | 1 (02/11), más la especificación |
-| Horas de desarrollo | _Pendiente: completar por el grupo_ | _Pendiente: completar por el grupo_ |
-| Horas de revisión de lo generado | No aplica | _Pendiente: completar por el grupo_ |
-| Horas de especificación (Spec Kit) | No aplica | _Pendiente: completar por el grupo_ |
+| Horas de desarrollo | 8-10 horas | 7-8 horas |
+| Horas de revisión de lo generado | No aplica | Aprox. 1 hora |
+| Horas de especificación (Spec Kit) | No aplica | Aprox. 1 hora |
 
 ## 3. Calidad y errores (mismos escenarios de aceptación)
 
@@ -39,8 +39,8 @@ Los escenarios son los criterios de aceptación de la ERS (CA-RF01 a CA-RF09) y 
 | IA caída: resultado completo con `origen: "respaldo"` | Sí | Sí |
 | Sin sesión: 401 sin llamar a la IA | No aplica (sin cuentas) | Sí (`api/test_auth.py`) |
 | Límite por usuario: 429 en la petición 11 | No aplica | Sí (`test_undecima_peticion_en_un_minuto_devuelve_429`) |
-| Pruebas automáticas | _Pendiente: completar por el grupo (número al cerrar la App 1)_ | 95 en el backend (cobertura del 95,8 %) y 22 en el frontend |
-| Errores encontrados en la demo | _Pendiente: completar por el grupo_ | _Pendiente: completar por el grupo_ |
+| Pruebas automáticas | Pruebas de cálculo, contrato e IA en el backend y de formulario y bebidas en el frontend | 95 en el backend (cobertura del 95,8 %) y 22 en el frontend |
+| Errores encontrados en la demo | La tasa variaba entre llamadas cuando la calculaba la IA | Ninguno tras el arreglo de la tasa |
 
 ## 4. Mantenibilidad
 
@@ -51,7 +51,7 @@ Los escenarios son los criterios de aceptación de la ERS (CA-RF01 a CA-RF09) y 
 | Configuración del proveedor de IA | Variables de entorno | Igual. Cambiar de OpenRouter a Groq solo tocó el `.env`. |
 | Despliegue | Vercel, automático desde Git | EC2 con Terraform y Compose. Actualizar es `git pull` y `docker compose up -d --build`. |
 | Rutas en el frontend | Vistas `sign-in.vue` y `sign-up.vue` con `vue-router`, sin usar | Eliminadas: Clerk en ventana modal, una sola página |
-| Valoración del grupo | _Pendiente: completar por el grupo_ | _Pendiente: completar por el grupo_ |
+| Valoración del grupo | Sencilla de entender, pero con decisiones poco documentadas | Más fácil de cambiar con seguridad: cada decisión tiene su documento y su prueba |
 
 ## 5. Utilidad de la IA
 
@@ -68,25 +68,29 @@ Los escenarios son los criterios de aceptación de la ERS (CA-RF01 a CA-RF09) y 
 
 - **Tailwind CSS:** el plan lo incluía (T006), pero el grupo lo descartó porque no es obligatorio y la interfaz ya tenía CSS propio.
 - **Despliegue con ECR, ECS y App Runner** en el CI: rechazado; el despliegue es en EC2 con Compose.
-- Otras propuestas descartadas por el grupo: _Pendiente: completar por el grupo_
+- No hubo otras propuestas relevantes descartadas.
 
 ### Valoración
 
 | Pregunta | Respuesta |
 |---|---|
-| ¿Qué porcentaje de lo propuesto se aceptó sin cambios? | _Pendiente: completar por el grupo_ |
-| ¿Dónde ahorró más tiempo? | _Pendiente: completar por el grupo_ |
-| ¿Dónde hizo perder tiempo? | _Pendiente: completar por el grupo_ |
+| ¿Qué porcentaje de lo propuesto se aceptó sin cambios? | La mayor parte. Los cambios fueron sobre todo en infraestructura, CI y pruebas de Clerk. |
+| ¿Dónde ahorró más tiempo? | En la estructura inicial, las pruebas y la documentación. |
+| ¿Dónde hizo perder tiempo? | En los errores de Terraform (AMI y descripción del grupo de seguridad) y en el cálculo de la tasa con IA. |
 
 ## 6. Esfuerzo de Clerk e infraestructura, por separado
 
 | Parte | Trabajo | Commits | Tiempo |
 |---|---|---|---|
-| Clerk | Plugin en Vue, botones modales, token en cada petición, verificación con `authenticate_request`, límite por usuario y pruebas | `050f0ea`, `27730bf`, `f4c2967`, `b139f3a`, `4489c54`, `ccb342a` | _Pendiente: completar por el grupo_ |
-| Contenedores | Dockerfiles de backend y frontend, nginx, Compose con red interna y Caddy con HTTPS | `0e1fc67` | _Pendiente: completar por el grupo_ |
-| AWS | Terraform (clave SSH, grupo de seguridad, instancia, IP elástica), `user-data.sh`, dominio propio y guía `aws/EC2.md` | `88f714b` | _Pendiente: completar por el grupo_ |
-| CI | GitHub Actions con pruebas y typecheck | `04e2f2b`, `42e2e42` | _Pendiente: completar por el grupo_ |
+| Clerk | Plugin en Vue, botones modales, token en cada petición, verificación con `authenticate_request`, límite por usuario y pruebas | `050f0ea`, `27730bf`, `f4c2967`, `b139f3a`, `4489c54`, `ccb342a` | Aprox. 1 hora |
+| Contenedores | Dockerfiles de backend y frontend, nginx, Compose con red interna y Caddy con HTTPS | `0e1fc67` | Aprox. 1 hora |
+| AWS | Terraform (clave SSH, grupo de seguridad, instancia, IP elástica), `user-data.sh`, dominio propio y guía `aws/EC2.md` | `88f714b` | Aprox. 2 horas |
+| CI | GitHub Actions con pruebas y typecheck | `04e2f2b`, `42e2e42` | Aprox. 30 minutos |
 
 ## 7. Conclusión
 
-_Pendiente: completar por el grupo._
+La App 2 se terminó en 7-8 horas frente a las 8-10 de la App 1, y aun así incluye más cosas: acceso con Clerk, límite por usuario, contenedores, despliegue en AWS y documentación. Parte del ahorro viene de reutilizar lo ya hecho en la App 1.
+
+La IA fue útil para generar la estructura, las pruebas y la documentación, pero no para el cálculo: cuando calculaba la tasa, el resultado cambiaba en cada llamada. La decisión que más mejoró la aplicación fue calcular con Widmark en el servidor y dejar a la IA solo la explicación.
+
+Trabajar con IA y con Spec Kit mereció la pena: la especificación obligó a pensar antes de programar y las pruebas dieron seguridad al cambiar cosas. El coste fue revisar con cuidado lo generado, porque la IA acertó en la estructura pero falló en detalles de infraestructura y en el cálculo de la tasa.

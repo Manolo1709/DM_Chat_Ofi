@@ -6,7 +6,7 @@
 
 ## Resumen
 
-SPA de una pantalla en Vue 3 que envía una solicitud de cálculo autenticada con Clerk a una API FastAPI. El servidor verifica el token, aplica un límite por usuario, calcula la tasa con Widmark, pide a un LLM (OpenRouter) solo la explicación y devuelve un JSON con esquema estable. Se empaqueta en dos contenedores con Docker Compose y se despliega en una instancia EC2 con Caddy delante para el HTTPS.
+SPA de una pantalla en Vue 3 que envía una solicitud de cálculo autenticada con Clerk a una API FastAPI. El servidor verifica el token, aplica un límite por usuario, calcula la tasa con Widmark, pide a un LLM (Groq) solo la explicación y devuelve un JSON con esquema estable. Se empaqueta en dos contenedores con Docker Compose y se despliega en una instancia EC2 con Caddy delante para el HTTPS.
 
 ## Contexto técnico
 
@@ -34,10 +34,10 @@ SPA de una pantalla en Vue 3 que envía una solicitud de cálculo autenticada co
 |---|---|---|
 | I. Aplicación mínima | Una sola vista en `App.vue`; Clerk con `SignInButton mode="modal"`; sin router ni base de datos | ⚠️ Quitar `src/views/sign-in.vue`, `sign-up.vue` y `vue-router`, que no se usan |
 | II. Reglas, no IA | `api/calculo.py` calcula; `ia.py` solo redacta; respaldo genérico | ✅ |
-| III. Secretos en backend | `.env` ignorado, `env_file` en Compose, `.dockerignore`, `.env.example` ficticio | ✅ (falta commitear `.env.example`) |
+| III. Secretos en backend | `.env` ignorado, `env_file` en Compose, `.dockerignore`, `.env.example` ficticio | ✅ (`.env.example` con valores ficticios ya commiteado) |
 | IV. Contrato estable | `api/schemas.py` ↔ `src/types/alcohol.ts`; 422 antes de la IA | ✅ |
-| V. Pruebas como evidencia | pytest y Vitest con mocks | ⚠️ Faltan las pruebas de 401 de Clerk |
-| VI. Revisión humana | Registro de propuestas aceptadas y rechazadas en la comparativa | ⚠️ Pendiente |
+| V. Pruebas como evidencia | pytest y Vitest con mocks | ✅ 95 pruebas de backend y 22 de frontend; `api/test_auth.py` cubre el 401 y el 429 |
+| VI. Revisión humana | Registro de propuestas aceptadas y rechazadas en la comparativa | ✅ Comparativa en `docs/COMPARATIVA.md` |
 
 ## Estructura del proyecto
 

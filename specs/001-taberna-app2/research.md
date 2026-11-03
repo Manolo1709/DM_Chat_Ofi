@@ -8,9 +8,9 @@
 
 ## D2. Proveedor y modelo de IA
 
-- **Decisión**: API compatible con OpenAI a través de OpenRouter, modelo gratuito `poolside/laguna-s-2.1:free`, configurable con `LLM_BASE_URL` y `LLM_MODEL`.
+- **Decisión**: API compatible con OpenAI a través de Groq (`https://api.groq.com/openai/v1`), con el modelo configurable en `LLM_MODEL` (en producción `qwen/qwen3.8-27b`; en local `openai/gpt-oss-120b` con `LLM_REASONING_EFFORT=low`). Límites medidos: 1000 peticiones al día y 8000 tokens por minuto; respuesta de 0,5 a 1 s.
 - **Motivo**: coste cero y posibilidad de cambiar de proveedor sin tocar el código.
-- **Alternativas**: Gemini directamente (se probó; con razonamiento activo cortaba el JSON si `LLM_REASONING_EFFORT` no era `none`).
+- **Alternativas**: OpenRouter (se usó al principio; su modelo gratuito dejó de estar disponible y devolvía 404). Gemini directamente (se probó; con razonamiento activo cortaba el JSON si `LLM_REASONING_EFFORT` no era `none`).
 
 ## D3. Autenticación
 
@@ -32,6 +32,6 @@
 
 ## D6. Despliegue y HTTPS
 
-- **Decisión**: EC2 `t3.micro` creada con Terraform, Caddy con Let's Encrypt y dominio `sslip.io` derivado de la IP.
-- **Motivo**: HTTPS automático sin comprar dominio; Clerk exige un origen HTTPS.
+- **Decisión**: EC2 `t3.micro` creada con Terraform, IP elástica, Caddy con Let's Encrypt y el dominio propio `lateberna.manoloplr.com` (registro A en Cloudflare, solo DNS).
+- **Motivo**: HTTPS automático, una IP que no cambia y un origen estable para Clerk.
 - **Alternativas**: ECS Fargate o App Runner (descartadas: el enunciado pide EC2 + Compose).
